@@ -91,7 +91,7 @@ export function ChatDashboard() {
   const splineScene = useMemo(() => 
     chatMode === "agent"
       ? "https://prod.spline.design/OCHi5lTP-1SjSufh/scene.splinecode"
-      : "https://prod.spline.design/Pl62V5iktotEfdgH/scene.splinecode"
+      : "https://prod.spline.design/OCHi5lTP-1SjSufh/scene.splinecode"
   , [chatMode])
 
   // Memoized callbacks for Spline events
