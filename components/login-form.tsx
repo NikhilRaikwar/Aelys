@@ -3,42 +3,53 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { usePrivy } from "@privy-io/react-auth"
-import { Wallet } from "lucide-react"
+import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text"
+import { ArrowRightIcon } from "@radix-ui/react-icons"
+import { useCallback } from "react"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const { login } = usePrivy()
+  const { login, ready } = usePrivy()
 
-  const handleConnectWallet = () => {
-    login()
-  }
+  const handleConnectWallet = useCallback(async () => {
+    if (!ready) return
+    
+    try {
+      await login()
+    } catch (error) {
+      console.error('Login failed:', error)
+    }
+  }, [login, ready])
 
   return (
-    <div className={cn("flex flex-col gap-8 items-center text-center", className)} {...props}>
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-          <Wallet className="w-8 h-8 text-primary" />
+    <div className={cn("flex flex-col items-center text-center space-y-8 py-8 max-w-4xl mx-auto", className)} {...props}>
+      {/* Small Badge-style Animated Headline */}
+      <div className="mb-6">
+        <div className="inline-flex items-center rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-md">
+          <span className="text-lg mr-2">✨</span>
+          <AnimatedShinyText className="text-sm font-medium text-white whitespace-nowrap">
+            Aelys: Unlock NFT Intelligence in Real Time
+          </AnimatedShinyText>
+          <span className="text-lg ml-2">✨</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Welcome to Aelys Copilot</h1>
-        <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
-          Aelys Copilot unlocks NFT and Web3 insights just for you. Connect your wallet to begin.
-        </p>
       </div>
-      
+
+      {/* Centered Main Headline */}
+      <h1 className="text-xl sm:text-2xl text-white/90 font-normal leading-relaxed max-w-3xl">
+        Connect your wallet for AI-powered analytics, live answers, and real-time NFT insights with bitsCrunch.
+      </h1>
+
+      {/* Single CTA Button with Arrow */}
       <Button 
         onClick={handleConnectWallet}
+        className="bg-[#5046e6] hover:bg-[#4338ca] text-white font-bold text-xl px-12 py-6 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 mt-8" 
         size="lg"
-        className="w-full max-w-sm h-12 text-base font-medium"
       >
-        <Wallet className="w-5 h-5 mr-2" />
-        Connect your wallet to get started
+        Connect Wallet
+        <ArrowRightIcon className="ml-3 h-6 w-6" />
       </Button>
-      
-      <p className="text-sm text-muted-foreground">
-        Secure wallet authentication powered by Privy
-      </p>
     </div>
   )
 }

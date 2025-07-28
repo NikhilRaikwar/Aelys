@@ -2,50 +2,83 @@
 
 import { usePrivy } from "@privy-io/react-auth"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useCallback } from "react"
 import { LoginForm } from "@/components/login-form"
-import { GalleryVerticalEnd } from "lucide-react"
 import Image from "next/image"
+import Spline from '@splinetool/react-spline'
 
 export default function Home() {
-  const { ready, authenticated } = usePrivy()
+  const { ready, authenticated, login } = usePrivy()
   const router = useRouter()
 
+  // Optimized redirect function
+  const redirectToDashboard = useCallback(() => {
+    router.replace("/dashboard") // Use replace instead of push for faster navigation
+  }, [router])
+
+  // Fast redirect on authentication
   useEffect(() => {
     if (ready && authenticated) {
-      router.push("/dashboard")
+      redirectToDashboard()
     }
-  }, [ready, authenticated, router])
+  }, [ready, authenticated, redirectToDashboard])
 
+  // Show loading state only when Privy is initializing
   if (!ready) {
     return (
-      <div className="flex min-h-svh items-center justify-center">
+      <div className="flex min-h-svh items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5046e6] mx-auto"></div>
+          <p className="mt-4 text-lg text-white font-medium">Connecting to Aelys...</p>
         </div>
       </div>
     )
   }
 
+  // Immediate redirect if authenticated
   if (authenticated) {
-    return null // Will redirect to dashboard
+    redirectToDashboard()
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="text-center">
+          <div className="animate-pulse">
+            <div className="w-16 h-16 bg-[#5046e6] rounded-full mx-auto mb-4"></div>
+            <p className="text-xl text-white font-medium">Welcome to Aelys!</p>
+            <p className="text-sm text-white/70 mt-2">Redirecting to dashboard...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
+      <div className="flex flex-col gap-4 p-6 md:p-10 relative">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image 
+            src="/bgg.jpeg" 
+            alt="Background" 
+            fill 
+            className="object-cover" 
+            style={{ objectPosition: 'center' }}
+            quality={100}
+            priority
+          />
+        </div>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col gap-4 h-full">
+        <div className="flex justify-center mb-8">
           <a 
             href="https://aelys.framer.ai/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center gap-2 font-medium hover:opacity-80 transition-opacity cursor-pointer"
+            className="flex items-center gap-4 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Image src="/logo.png" alt="Aelys Logo" width={16} height={16} className="size-4" />
-            </div>
-            Aelys Copilot
+            <Image src="/logo.png" alt="Aelys Logo" width={64} height={64} className="size-16" />
+            <h2 className="text-3xl font-bold text-white">
+              Aelys
+            </h2>
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -53,20 +86,13 @@ export default function Home() {
             <LoginForm />
           </div>
         </div>
-      </div>
-      <div className="relative hidden bg-muted lg:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center space-y-4 p-8">
-            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <GalleryVerticalEnd className="w-12 h-12 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight">NFT & Web3 Insights</h2>
-            <p className="text-muted-foreground max-w-sm">
-              Advanced analytics and AI-powered insights for the decentralized world.
-            </p>
-          </div>
         </div>
+      </div>
+      <div className="relative hidden lg:block">
+        <Spline
+          scene="https://prod.spline.design/xQReneb2fRHkE4fN/scene.splinecode" 
+          className="w-full h-full"
+        />
       </div>
     </div>
   )
