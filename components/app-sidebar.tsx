@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { Wallet, LogOut, BarChart3, Chrome, Brain, Database } from "lucide-react"
+import { Wallet, LogOut, BarChart3, Chrome, Brain, Database, Sun, Moon } from "lucide-react"
 import Image from "next/image"
 
 import {
@@ -17,8 +17,20 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { useTheme } from "@/contexts/theme-context"
 
 // Agent data
 const agents = [
@@ -66,6 +78,8 @@ export function AppSidebar({
   onWalletDisconnect,
   ...props
 }: AppSidebarProps) {
+  const { actualTheme } = useTheme()
+  
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -142,14 +156,36 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-lg"
                 side="bottom"
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem onClick={onWalletDisconnect}>
-                  <LogOut className="size-4 mr-2" />
-                  Disconnect Wallet
+                <DropdownMenuLabel className="px-2 py-1.5">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {walletAddress ? formatAddress(walletAddress) : "Guest User"}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {walletAddress ? "Wallet Connected" : "No Wallet Connected"}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                
+                <DropdownMenuSeparator />
+                <div className="flex items-center justify-between px-2 py-1.5">
+                  <span className="text-sm font-medium">Theme</span>
+                  <ThemeToggle variant="compact" size="sm" />
+                </div>
+                <DropdownMenuSeparator />
+                
+                {/* Disconnect Wallet */}
+                <DropdownMenuItem 
+                  onClick={onWalletDisconnect}
+                  className="flex items-center gap-2 px-2 py-2 text-destructive focus:text-destructive"
+                >
+                  <LogOut className="size-4" />
+                  <span>Disconnect Wallet</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
