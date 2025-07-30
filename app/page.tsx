@@ -71,8 +71,8 @@ export default function Home() {
       </div>
       
       {/* Centered Navigation Bar */}
-      <div className="relative z-10 flex justify-center pt-8 px-4">
-        <nav className="flex items-center justify-between w-full max-w-4xl bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-8 py-4">
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-8 px-4">
+        <nav className="flex items-center justify-between w-full max-w-4xl bg-black/20 backdrop-blur-xl border border-white/10 rounded-full px-8 py-4 shadow-lg shadow-black/20">
           {/* Logo and Brand */}
           <div className="flex items-center space-x-3">
             <Image 
@@ -96,7 +96,7 @@ export default function Home() {
               Home
             </a>
             <a 
-              href="https://github.com/NikhilRaikwarr" 
+              href="https://github.com/NikhilRaikwar" 
               target="_blank"
               rel="noopener noreferrer"
               className="text-white/80 hover:text-white transition-colors duration-200 font-medium cursor-pointer"
@@ -108,10 +108,10 @@ export default function Home() {
       </div>
       
       {/* Content Overlay */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 -mt-16">
+      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 pt-32">
         {/* Announcement Banner */}
-        <div className="mb-12">
-          <div className="inline-flex items-center bg-black/30 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
+        <div className="mb-16">
+          <div className="inline-flex items-center bg-black/30 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
             <span className="text-sm font-medium text-white/90">
               ✨ Aelys: Unlock NFT Intelligence in Real Time
             </span>
@@ -119,7 +119,7 @@ export default function Home() {
         </div>
         
         {/* Main Headline */}
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-12 leading-tight max-w-5xl">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-16 leading-tight max-w-5xl">
           Connect your wallet for{" "}
           <span className="bg-gradient-to-r from-red-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
             AI-powered analytics
