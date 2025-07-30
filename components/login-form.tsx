@@ -6,6 +6,8 @@ import { usePrivy } from "@privy-io/react-auth"
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text"
 import { ArrowRightIcon } from "@radix-ui/react-icons"
 import { useCallback } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export function LoginForm({
   className,
@@ -50,6 +52,18 @@ export function LoginForm({
         Connect Wallet
         <ArrowRightIcon className="ml-3 h-6 w-6" />
       </Button>
+      
+      {/* Hyperspeed CTA Button */}
+      <Link href="/hyperspeed">
+        <Button 
+          variant="outline"
+          className="bg-transparent border-2 border-white/30 hover:border-white/50 text-white font-semibold text-lg px-10 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm hover:bg-white/10 mt-4" 
+          size="lg"
+        >
+          Click Here
+          <ArrowRightIcon className="ml-2 h-5 w-5" />
+        </Button>
+      </Link>
     </div>
   )
 }
