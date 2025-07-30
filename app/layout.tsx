@@ -4,6 +4,8 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { Providers } from "./providers"
+import { ThemeProvider } from "../contexts/theme-context"
+import ThemeScript from "../components/theme-script"
 
 export const metadata: Metadata = {
   title: "Aelys Copilot",
@@ -18,8 +20,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <Providers>{children}</Providers>
+<body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+        <ThemeScript />
+        <ThemeProvider>
+          <Providers>{children}</Providers>
+        </ThemeProvider>
       </body>
     </html>
   )
