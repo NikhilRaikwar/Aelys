@@ -35,28 +35,16 @@ import { useTheme } from "@/contexts/theme-context"
 // Agent data
 const agents = [
   {
-    id: "chatbots-stats",
-    name: "Chatbots for Stats",
-    icon: BarChart3,
-    description: "Statistical analysis and data insights",
-  },
-  {
-    id: "chrome-copilot",
-    name: "Chrome Copilot",
-    icon: Chrome,
-    description: "Browser automation and web assistance",
-  },
-  {
-    id: "autogpt-insights",
-    name: "AutoGPT for Insights",
+    id: "copilot",
+    name: "Aelys Copilot",
     icon: Brain,
-    description: "Autonomous AI for deep insights",
+    description: "Ask anything about NFTs, wallets, or the market…",
   },
   {
-    id: "rag-llm-agents",
-    name: "RAG/LLM Agents",
-    icon: Database,
-    description: "Retrieval-augmented generation agents",
+    id: "market-insights",
+    name: "Market Insights",
+    icon: BarChart3,
+    description: "Get real-time market trends, top movers, and analytics in chat.",
   },
 ]
 
@@ -81,7 +69,11 @@ export function AppSidebar({
   const { actualTheme } = useTheme()
   
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar 
+      collapsible="icon" 
+      className="sticky-sidebar sidebar-transition" 
+      {...props}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

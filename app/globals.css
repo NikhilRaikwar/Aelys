@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import '../styles/sticky-sidebar.css';
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

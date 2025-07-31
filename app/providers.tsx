@@ -8,7 +8,7 @@ const privyConfig = {
   // Customize Privy's appearance in your app
   appearance: {
     theme: "light" as const,
-    accentColor: "#5046e6" as `#${string}`, // Match brand color
+    accentColor: "#5046e6", // Match brand color
     logo: "/logo.png",
     showWalletLoginFirst: true, // Show wallet option first
     walletChainType: "ethereum-only" as const,

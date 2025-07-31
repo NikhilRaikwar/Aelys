@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Menu, Paperclip, ArrowUp, ChevronDown } from "lucide-react"
+import { BorderBeam } from "@/components/magicui/border-beam"
 
 const suggestionCards = [
   {
@@ -25,9 +26,10 @@ const suggestionCards = [
   },
 ]
 
-export function ChatInterface() {
   const [message, setMessage] = useState("")
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [inputFocused, setInputFocused] = useState(false)
+  const inputRef = useRef(null)
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -99,17 +101,39 @@ export function ChatInterface() {
           </div>
         </div>
 
-        {/* Input area */}
+        {/* Input area with animated border beam and focus border logic */}
         <div className="p-6 bg-white border-t border-gray-200">
           <div className="max-w-4xl mx-auto">
-            <div className="relative">
+            <div className="relative group">
+              {/* Animated border beam when not focused */}
+              {!inputFocused && (
+                <BorderBeam
+                  className="z-10"
+                  size={420}
+                  borderWidth={2}
+                  colorFrom="#000"
+                  colorTo="#ffaa40"
+                  style={{ pointerEvents: "none" }}
+                />
+              )}
               <Input
+                ref={inputRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Send a message..."
-                className="pr-20 py-3 text-base border-gray-300 focus:border-gray-400 focus:ring-gray-400"
+                className={
+                  `pr-20 py-3 text-base bg-white ` +
+                  (inputFocused
+                    ? "border-2 border-black focus:border-black ring-0 outline-none"
+                    : "border border-transparent focus:border-black ring-0 outline-none")
+                }
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                tabIndex={0}
+                style={{ zIndex: 20, position: "relative" }}
+                autoComplete="off"
               />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 z-30">
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <Paperclip className="w-4 h-4 text-gray-400" />
                 </Button>

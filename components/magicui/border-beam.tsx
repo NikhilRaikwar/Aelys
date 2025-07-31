@@ -64,43 +64,77 @@ export const BorderBeam = ({
   borderWidth = 1,
 }: BorderBeamProps) => {
   return (
-    <div
-      className="pointer-events-none absolute inset-0 rounded-[inherit] border-transparent [mask-clip:padding-box,border-box] [mask-composite:intersect] [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)] border-(length:--border-beam-width)"
-      style={
-        {
-          "--border-beam-width": `${borderWidth}px`,
-        } as React.CSSProperties
-      }
-    >
-      <motion.div
-        className={cn(
-          "absolute aspect-square",
-          "bg-gradient-to-l from-[var(--color-from)] via-[var(--color-to)] to-transparent",
-          className,
-        )}
-        style={
-          {
+    <div className="pointer-events-none absolute inset-0 rounded-[inherit] overflow-hidden">
+      {/* Static border container - no rotation */}
+      <div
+        className="absolute inset-0 rounded-[inherit]"
+        style={{
+          border: `${borderWidth}px solid transparent`,
+          background: 'linear-gradient(#000, #000) padding-box, linear-gradient(45deg, transparent, transparent) border-box',
+        }}
+      >
+        {/* Traveling gradient beam */}
+        <motion.div
+          className={cn(
+            "absolute",
+            className,
+          )}
+          style={{
             width: size,
-            offsetPath: `rect(0 auto auto 0 round ${size}px)`,
-            "--color-from": colorFrom,
-            "--color-to": colorTo,
+            height: size,
+            background: `conic-gradient(from 0deg, transparent 0%, ${colorFrom} 25%, ${colorTo} 50%, ${colorFrom} 75%, transparent 100%)`,
+            borderRadius: '50%',
+            filter: 'blur(4px)',
+            opacity: 0.8,
+            offsetPath: `rect(0px auto auto 0px round ${16}px)`,
             ...style,
-          } as MotionStyle
-        }
-        initial={{ offsetDistance: `${initialOffset}%` }}
-        animate={{
-          offsetDistance: reverse
-            ? [`${100 - initialOffset}%`, `${-initialOffset}%`]
-            : [`${initialOffset}%`, `${100 + initialOffset}%`],
-        }}
-        transition={{
-          repeat: Infinity,
-          ease: "linear",
-          duration,
-          delay: -delay,
-          ...transition,
-        }}
-      />
+          } as MotionStyle}
+          initial={{ offsetDistance: `${initialOffset}%` }}
+          animate={{
+            offsetDistance: reverse
+              ? [`${100 - initialOffset}%`, `${-initialOffset}%`]
+              : [`${initialOffset}%`, `${100 + initialOffset}%`],
+          }}
+          transition={{
+            repeat: Infinity,
+            ease: "linear",
+            duration,
+            delay: -delay,
+            ...transition,
+          }}
+        />
+        
+        {/* Additional traveling beam for more effect */}
+        <motion.div
+          className={cn(
+            "absolute",
+            className,
+          )}
+          style={{
+            width: size * 0.6,
+            height: size * 0.6,
+            background: `linear-gradient(90deg, transparent, ${colorFrom}, ${colorTo}, transparent)`,
+            borderRadius: '50%',
+            filter: 'blur(2px)',
+            opacity: 0.6,
+            offsetPath: `rect(0px auto auto 0px round ${16}px)`,
+            ...style,
+          } as MotionStyle}
+          initial={{ offsetDistance: `${initialOffset + 50}%` }}
+          animate={{
+            offsetDistance: reverse
+              ? [`${150 - initialOffset}%`, `${50 - initialOffset}%`]
+              : [`${initialOffset + 50}%`, `${150 + initialOffset}%`],
+          }}
+          transition={{
+            repeat: Infinity,
+            ease: "linear",
+            duration: duration * 1.2,
+            delay: -delay - 0.5,
+            ...transition,
+          }}
+        />
+      </div>
     </div>
   );
 };
