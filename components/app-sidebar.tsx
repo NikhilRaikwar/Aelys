@@ -71,7 +71,7 @@ export function AppSidebar({
   return (
     <Sidebar 
       collapsible="icon" 
-      className="sticky-sidebar sidebar-transition" 
+      className="fixed top-0 left-0 h-screen z-50 transition-all duration-300" 
       {...props}
     >
       <SidebarHeader>

@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePrivy } from "@privy-io/react-auth"
 import { useRouter } from "next/navigation"
+import { chatStorage } from "@/lib/chat-storage"
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { UnifiedChatInterface } from "@/components/unified-chat-interface"
+import { StickyHeader, MobileStickyHeader } from "@/components/ui/sticky-header"
 
 // Agent-specific configurations
 const agentConfigs = {
@@ -36,8 +38,15 @@ const agentConfigs = {
 
 export function ChatDashboard() {
   const [activeAgent, setActiveAgent] = useState("copilot")
+  const [refreshKey, setRefreshKey] = useState(0)
   const { user, logout } = usePrivy()
   const router = useRouter()
+
+  // Check if the active agent has any chat history on mount
+  useEffect(() => {
+    const hasHistory = chatStorage.hasChatHistory(activeAgent as 'copilot' | 'market-insights')
+    console.log(`Agent ${activeAgent} has chat history:`, hasHistory)
+  }, [activeAgent])
 
   const handleWalletDisconnect = async () => {
     await logout()
@@ -73,15 +82,25 @@ export function ChatDashboard() {
         onWalletDisconnect={handleWalletDisconnect}
       />
       <SidebarInset>
-        {/* Clean minimal header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-          </div>
-        </header>
+        {/* Sticky header with sidebar trigger and new chat button */}
+        <StickyHeader onNewChat={() => {
+          // Clear chat history for current agent and reset interface
+          chatStorage.clearChatHistory(activeAgent as 'copilot' | 'market-insights');
+          // Scroll to top immediately
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setRefreshKey(prev => prev + 1); // Force refresh of chat interface
+        }} />
+        <MobileStickyHeader onNewChat={() => {
+          // Clear chat history for current agent and reset interface  
+          chatStorage.clearChatHistory(activeAgent as 'copilot' | 'market-insights');
+          // Scroll to top immediately
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setRefreshKey(prev => prev + 1); // Force refresh of chat interface
+        }} />
 
         {/* Render unified chat interface */}
         <UnifiedChatInterface
+          key={`${activeAgent}-${refreshKey}`}
           splineScene="https://prod.spline.design/OCHi5lTP-1SjSufh/scene.splinecode"
           walletAddress={formatAddress(walletAddress) || "Guest User"}
           agentType={activeAgent as 'copilot' | 'market-insights'}
