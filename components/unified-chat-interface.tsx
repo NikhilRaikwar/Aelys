@@ -1,9 +1,12 @@
 "use client"
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, Bot, TrendingUp } from 'lucide-react';
+import { ChatMessage, LoadingMessage } from '@/components/ui/chat-message';
+import { StickyHeader, MobileStickyHeader } from '@/components/ui/sticky-header';
+import { chatStorage, ChatMessage as ChatMessageType } from '@/lib/chat-storage';
+import { ArrowUp, Bot, TrendingUp, Loader2 } from 'lucide-react';
 import Spline from '@splinetool/react-spline';
 import { SimpleBorderBeam } from '@/components/ui/simple-border-beam';
 
@@ -11,23 +14,158 @@ interface UnifiedChatInterfaceProps {
   splineScene: string;
   walletAddress: string;
   agentType: 'copilot' | 'market-insights';
+  onNewChatExternal?: () => void;
 }
 
 export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({ 
   splineScene, 
   walletAddress, 
-  agentType 
+  agentType,
+  onNewChatExternal 
 }) => {
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatMessageType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isChatStarted, setIsChatStarted] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load chat history when agent type changes
+  useEffect(() => {
+    const messages = chatStorage.getMessages(agentType);
+    setChatHistory(messages);
+    setIsChatStarted(messages.length > 0);
+    console.log(`Loaded ${messages.length} messages for ${agentType}`);
+  }, [agentType]);
+
+  // Listen for external new chat calls
+  useEffect(() => {
+    if (onNewChatExternal) {
+      // This effect will trigger whenever onNewChatExternal changes
+      // The actual reset logic is handled by the parent component
+      const messages = chatStorage.getMessages(agentType);
+      setChatHistory(messages);
+      setIsChatStarted(messages.length > 0);
+    }
+  }, [onNewChatExternal, agentType]);
+
+  // Auto-scroll to bottom when new messages arrive (only for active conversations)
+  const scrollToBottom = () => {
+    if (isChatStarted && chatHistory.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Scroll to top when starting a new chat or switching agents
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (isChatStarted && chatHistory.length > 0) {
+      scrollToBottom();
+    } else {
+      // Always start at top for new chats or welcome screen
+      scrollToTop();
+    }
+  }, [chatHistory, isChatStarted]);
 
   const handleSplineLoad = useCallback(() => {
     console.log(`Spline scene loaded`);
   }, []);
 
+  const sendMessage = async () => {
+    if (!message.trim() || isLoading) return;
+    
+    const userMessage = message.trim();
+    setMessage('');
+    setIsLoading(true);
+    
+    // Mark chat as started and hide welcome elements
+    if (!isChatStarted) {
+      setIsChatStarted(true);
+    }
+    
+    // Add user message to storage and get the generated message
+    const newUserMessage = chatStorage.addMessage(agentType, 'user', userMessage);
+    setChatHistory(prev => [...prev, newUserMessage]);
+    
+    try {
+
+      // Call the agent API
+      const response = await fetch('/api/agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: userMessage,
+          history: chatHistory
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get response from agent');
+      }
+      
+      const agentResponse = await response.json();
+      
+      // Add agent response to chat
+      const newAgentMessage = chatStorage.addMessage(
+        agentType,
+        'assistant',
+        agentResponse.answer || 'I apologize, but I encountered an error processing your request.'
+      );
+      
+      setChatHistory(prev => [...prev, newAgentMessage]);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      
+      // Add error message
+      const errorMessage = chatStorage.addMessage(
+        agentType,
+        'assistant',
+        'I apologize, but I encountered an error processing your request. Please try again.'
+      );
+      
+      setChatHistory(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   const handleSplineError = useCallback((error: any) => {
     console.error(`Spline error:`, error);
   }, []);
+
+  // Handle new chat - reset chat state and clear storage
+  const handleNewChat = useCallback(() => {
+    // Clear chat history for current agent
+    chatStorage.clearChatHistory(agentType);
+    setChatHistory([]);
+    setIsChatStarted(false);
+    setMessage('');
+    setIsLoading(false);
+    
+    // Scroll to top immediately for new chat
+    scrollToTop();
+    
+    // Focus the input after reset
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+    
+    console.log(`Started new chat for ${agentType}`);
+  }, [agentType]);
 
   const splineFallback = useMemo(
     () => (
@@ -44,98 +182,153 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
 
   return (
     <div className="flex flex-1 flex-col relative min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-background to-background/95">
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
-        <div className="w-full max-w-4xl mx-auto space-y-12">
-          
-          {/* Centered Spline Animation */}
-          <div className="flex justify-center">
-            <div className="w-full max-w-sm h-48 flex items-center justify-center">
-              <div className="w-full h-full relative spline-container">
-                <Spline
-                  scene={splineScene}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    background: "transparent",
-                  }}
-                  onLoad={handleSplineLoad}
-                  onError={handleSplineError}
-                  fallback={splineFallback}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Centered Welcome Message */}
-          <div className="text-center space-y-6">
-            <div className="flex items-center justify-center gap-3">
-              {agentType === 'copilot' ? (
-                <Bot className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary" />
-              ) : (
-                <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary" />
+      {isChatStarted ? (
+        /* Chat Mode - Full Screen Chat */
+        <div className="flex flex-1 flex-col h-full">
+          {/* Chat Messages Area */}
+          <div className="flex-1 overflow-y-auto px-4 py-6 chat-scroll">
+            <div className="max-w-4xl mx-auto space-y-6 chat-container">
+              {chatHistory.map((entry) => (
+                <ChatMessage key={entry.id} message={entry} agentType={agentType} />
+              ))}
+              {isLoading && (
+                <LoadingMessage agentType={agentType} />
               )}
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-                {agentType === 'copilot' ? 'Aelys Copilot' : 'Market Insights'}
-              </h1>
+              <div ref={messagesEndRef} />
             </div>
-            <h2 className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              Welcome, {walletAddress}! How can I help you today?
-            </h2>
           </div>
-
-          {/* Centered Chat Input with Border Beam */}
-          <div className="w-full max-w-3xl mx-auto">
-            <div className="relative">
-              <div className="relative group">
-                <div className="relative">
-                  <Input
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="How can I help you today?"
-                    className={`w-full h-16 pl-6 pr-16 text-lg rounded-2xl transition-all duration-300 bg-muted/50 placeholder:text-muted-foreground outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none ${
-                      isFocused 
-                        ? 'border-2 border-foreground focus:border-foreground focus-visible:border-foreground' 
-                        : 'border-0 focus:border-0'
-                    }`}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                  />
-                  
-                  {/* Send button */}
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <Button
-                      size="icon"
-                      className="h-12 w-12 rounded-xl bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground transition-all duration-200"
-                      disabled={!message.trim()}
-                    >
-                      <ArrowUp className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Simple CSS Border Beam animation when not focused */}
-                {!isFocused && (
-                  <SimpleBorderBeam
-                    duration={8}
-                    borderWidth={2}
-                  />
-                )}
+          
+          {/* Fixed Chat Input at Bottom */}
+          <div className="border-t bg-background/95 backdrop-blur px-4 py-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="relative">
+                <Input
+                  ref={inputRef}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  className="w-full h-12 pl-4 pr-12 rounded-xl bg-muted/50 border-0 focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                />
+                <Button
+                  size="icon"
+                  onClick={sendMessage}
+                  disabled={!message.trim() || isLoading}
+                  className="absolute right-1 top-1 h-10 w-10 rounded-lg"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ArrowUp className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
-            </div>
-            
-            {/* Bottom helper text */}
-            <div className="mt-3 text-center">
-              <p className="text-xs text-muted-foreground/60">
-                {agentType === 'copilot' 
-                  ? 'Ask anything about NFTs, wallets, or the market…'
-                  : 'Get real-time market trends, top movers, and analytics…'
-                }
-              </p>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* Welcome Mode - Centered Layout */
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
+          <div className="w-full max-w-4xl mx-auto space-y-12">
+            
+            {/* Centered Spline Animation */}
+            <div className="flex justify-center">
+              <div className="w-full max-w-sm h-48 flex items-center justify-center">
+                <div className="w-full h-full relative spline-container">
+                  <Spline
+                    scene={splineScene}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      background: "transparent",
+                    }}
+                    onLoad={handleSplineLoad}
+                    onError={handleSplineError}
+                    fallback={splineFallback}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Centered Welcome Message */}
+            <div className="text-center space-y-6">
+              <div className="flex items-center justify-center gap-3">
+                {agentType === 'copilot' ? (
+                  <Bot className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary" />
+                ) : (
+                  <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-primary" />
+                )}
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
+                  {agentType === 'copilot' ? 'Aelys Copilot' : 'Market Insights'}
+                </h1>
+              </div>
+              <h2 className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
+                Welcome, {walletAddress}! How can I help you today?
+              </h2>
+            </div>
+
+            {/* Centered Chat Input with Border Beam */}
+            <div className="w-full max-w-3xl mx-auto">
+              <div className="relative">
+                <div className="relative group">
+                  <div className="relative">
+                    <Input
+                      ref={inputRef}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="How can I help you today?"
+                      className={`w-full h-16 pl-6 pr-16 text-lg rounded-2xl transition-all duration-300 bg-muted/50 placeholder:text-muted-foreground outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none ${
+                        isFocused 
+                          ? 'border-2 border-foreground focus:border-foreground focus-visible:border-foreground' 
+                          : 'border-0 focus:border-0'
+                      }`}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      disabled={isLoading}
+                    />
+                    
+                    {/* Send button */}
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <Button
+                        size="icon"
+                        className="h-12 w-12 rounded-xl bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground transition-all duration-200"
+                        onClick={sendMessage}
+                        disabled={!message.trim() || isLoading}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <ArrowUp className="w-5 h-5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Simple CSS Border Beam animation when not focused */}
+                  {!isFocused && (
+                    <SimpleBorderBeam
+                      duration={8}
+                      borderWidth={2}
+                    />
+                  )}
+                </div>
+              </div>
+              
+              {/* Bottom helper text */}
+              <div className="mt-3 text-center">
+                <p className="text-xs text-muted-foreground/60">
+                  {agentType === 'copilot' 
+                    ? 'Ask anything about NFTs, wallets, or the market…'
+                    : 'Get real-time market trends, top movers, and analytics…'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
