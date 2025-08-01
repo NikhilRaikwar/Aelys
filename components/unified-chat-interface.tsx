@@ -293,8 +293,8 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
               </div>
               <h2 className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
 {agentType === 'copilot'
-                  ? 'AI-powered wallet insights & asset analytics, personalized to your Web3 journey.'
-                  : 'The AI-powered dashboard for real-time NFT market analytics & trends.'}
+                  ? 'AI-powered wallet insights, asset analytics, and crypto education — personalized to your Web3 journey.'
+                  : 'Real-time NFT market analytics, trading insights, and Web3 education at your fingertips.'}
               </h2>
             </div>
 
@@ -309,8 +309,8 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                       onChange={(e) => setMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
 placeholder={agentType === 'copilot'
-                      ? 'Ask about your wallet, NFT portfolio, DeFi exposure, or risks…'
-                      : 'Ask about market trends, trading volumes, whale activity, or washtrading…'}
+                      ? 'Ask about your wallet, NFT portfolio, DeFi exposure, risks, or general crypto questions…'
+                      : 'Ask about market trends, trading volumes, whale activity, washtrading, or general NFT concepts…'}
                       className={`w-full h-16 pl-6 pr-16 text-lg rounded-2xl transition-all duration-300 bg-muted/50 placeholder:text-muted-foreground outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none ${
                         isFocused 
                           ? 'border-2 border-foreground focus:border-foreground focus-visible:border-foreground' 
