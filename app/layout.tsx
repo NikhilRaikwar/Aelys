@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import "../styles/chat-ui.css"
 import { Providers } from "./providers"
@@ -21,11 +22,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-<body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <ThemeScript />
         <ThemeProvider>
           <Providers>{children}</Providers>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )
