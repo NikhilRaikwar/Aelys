@@ -21,6 +21,17 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Helper function to detect if a query is general/educational
+function isGeneralQuery(query: string): boolean {
+  const generalKeywords = [
+    'what is', 'explain', 'how do', 'tell me about', 'define', 'difference between',
+    'what are', 'how to', 'basics', 'educational', 'onboarding', 'learn about',
+    'understand', 'concept of', 'meaning of', 'introduction to'
+  ];
+  const lowerQuery = query.toLowerCase();
+  return generalKeywords.some(keyword => lowerQuery.includes(keyword));
+}
+
 // Helper function to call portfolio endpoints
 async function callPortfolioEndpoint(endpointName: string, walletAddress: string) {
   switch (endpointName) {
@@ -51,7 +62,7 @@ async function callPortfolioEndpoint(endpointName: string, walletAddress: string
   }
 }
 
-const AELYS_COPILOT_SYSTEM_PROMPT = `You are Aelys Copilot, an expert NFT Portfolio & Wallet Intelligence AI assistant. You specialize in analyzing connected wallets and providing personalized portfolio insights.
+const AELYS_COPILOT_SYSTEM_PROMPT = `You are Aelys Copilot, an expert NFT Portfolio & Wallet Intelligence AI assistant. You specialize in analyzing connected wallets and providing personalized portfolio insights, as well as answering general questions about NFTs, crypto, Web3, and blockchain concepts.
 
 Available Portfolio Analysis Functions:
 1. defi_balance: Get DeFi portfolio breakdown (token holdings, values, compositions)
@@ -66,7 +77,10 @@ Available Portfolio Analysis Functions:
 10. nft_traders: Get trading behavior analysis (trader patterns, comparisons)
 11. nft_washtrade: Get wash trading detection (suspicious activity analysis)
 
-CRITICAL: When a user asks about wallet-specific data (portfolio, balance, score, NFTs, DeFi, metrics, etc.), you MUST respond with JSON to trigger API calls. Never provide generic advice without fetching real data first.
+REQUIRED RESPONSE LOGIC:
+1. For GENERAL/EDUCATIONAL queries ("What is an NFT?", "How do I secure my wallet?", "What is DeFi?"), provide conversational responses directly without API calls.
+2. For WALLET-SPECIFIC queries (portfolio, balance, score, risk analysis), you MUST respond with JSON to trigger API calls.
+3. For HYBRID queries ("What is a risk score and what's mine?"), first explain the concept, then mention you'll fetch their specific data.
 
 For wallet-specific queries, ALWAYS respond with JSON in this exact format:
 {
@@ -89,7 +103,7 @@ Example mappings:
 - "trading performance" → use "nft_analytics" function
 - "wash trades" → use "nft_washtrade" function
 
-Only provide conversational responses for general educational questions that don't require wallet data.`;
+For general questions, be conversational, educational, and helpful. For wallet queries, use the API to get real data.`;
 
 export async function askAelysCopilot(
   userQuery: string,
@@ -99,6 +113,30 @@ export async function askAelysCopilot(
   const startTime = Date.now();
 
   try {
+    // Check if this is a general/educational query
+    if (isGeneralQuery(userQuery)) {
+      const generalSystemPrompt = `You are Aelys Copilot, an expert in NFTs, cryptocurrency, DeFi, Web3, and blockchain technology. Provide clear, educational, and conversational answers to general questions about crypto onboarding, wallet security, NFT concepts, DeFi protocols, and Web3 fundamentals. Focus on being helpful and informative for users learning about these topics.`;
+      
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: generalSystemPrompt },
+          ...chatHistory,
+          { role: 'user', content: userQuery }
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      });
+      
+      return {
+        answer: response.choices[0]?.message?.content || "I'm sorry, I couldn't provide an answer to your question.",
+        metadata: {
+          tokensUsed: response.usage?.total_tokens || 0,
+          executionTime: Date.now() - startTime,
+        }
+      };
+    }
+
     if (
       !walletAddress &&
       (userQuery.toLowerCase().includes('my wallet') ||

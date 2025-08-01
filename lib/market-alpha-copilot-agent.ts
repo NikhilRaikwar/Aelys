@@ -19,6 +19,17 @@ const openai = new OpenAI({
   apiKey: apiKey,
 });
 
+// Helper function to detect if a query is general/educational
+function isGeneralQuery(query: string): boolean {
+  const generalKeywords = [
+    'what is', 'explain', 'how do', 'tell me about', 'define', 'difference between',
+    'what are', 'how to', 'basics', 'educational', 'onboarding', 'learn about',
+    'understand', 'concept of', 'meaning of', 'introduction to'
+  ];
+  const lowerQuery = query.toLowerCase();
+  return generalKeywords.some(keyword => lowerQuery.includes(keyword));
+}
+
 // Helper function to call market insight endpoints
 async function callMarketInsightEndpoint(endpointName: string, params: MarketInsightParams) {
   switch (endpointName) {
@@ -184,7 +195,7 @@ function extractChartData(apiData: any, endpointType: string): MarketChartData |
   return datasets.length > 0 ? { block_dates, datasets } : null;
 }
 
-const MARKET_ALPHA_COPILOT_SYSTEM_PROMPT = `You are Market Alpha Copilot, specialized in NFT market analytics. You ONLY answer queries related to market insights and trends using UnleashNFTs market insight endpoints.
+const MARKET_ALPHA_COPILOT_SYSTEM_PROMPT = `You are Market Alpha Copilot, specialized in NFT market analytics and general market education. You can answer both general questions about NFT markets, trading concepts, and blockchain technology, as well as provide specific market insights using UnleashNFTs market insight endpoints.
 
 Available Market Insight API functions:
 1. analytics: NFT market analytics (volume, sales, transactions, transfers trends) - HAS CHART DATA
@@ -251,6 +262,29 @@ export async function askMarketAlphaCopilotAgent(
   const startTime = Date.now();
   
   try {
+    // Check if this is a general/educational query
+    if (isGeneralQuery(userQuery)) {
+      const generalSystemPrompt = `You are Market Alpha Copilot, an expert in NFT markets, crypto trading, and blockchain technology. Provide clear, educational, and conversational answers to general questions about NFTs, cryptocurrency, Web3, trading concepts, and market analysis. Focus on being helpful and informative for users learning about these topics.`;
+      
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: generalSystemPrompt },
+          ...chatHistory,
+          { role: 'user', content: userQuery }
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      });
+      
+      return {
+        answer: response.choices[0]?.message?.content || "I'm sorry, I couldn't provide an answer to your question.",
+        metadata: {
+          tokensUsed: response.usage?.total_tokens || 0,
+          executionTime: Date.now() - startTime,
+        }
+      };
+    }
     const messages: ChatMessage[] = [
       { role: 'system', content: MARKET_ALPHA_COPILOT_SYSTEM_PROMPT },
       ...chatHistory,
