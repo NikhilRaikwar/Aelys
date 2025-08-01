@@ -38,13 +38,13 @@ const agents = [
     id: "copilot",
     name: "Aelys Copilot",
     icon: Brain,
-    description: "Ask anything about NFTs, wallets, or the market…",
+    description: "AI-powered wallet insights & asset analytics, personalized to your Web3 journey.",
   },
   {
     id: "market-insights",
-    name: "Market Insights",
+    name: "Market Alpha Copilot",
     icon: BarChart3,
-    description: "Get real-time market trends, top movers, and analytics in chat.",
+    description: "The AI-powered dashboard for real-time NFT market analytics & trends.",
   },
 ]
 

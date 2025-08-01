@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { askAelysAgent } from '@/lib/agent';
-import { askMarketInsightAgent } from '@/lib/market-insight-agent';
+import { askMarketAlphaCopilotAgent } from '@/lib/market-alpha-copilot-agent';
 import { askAelysCopilot } from '@/lib/aelys-agent';
 
 // Helper function to extract wallet address from query
@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
     
     // Route to appropriate agent based on agentType
     if (agentType === 'market-insights') {
-      response = await askMarketInsightAgent(query, history);
-      console.log('Market Insight Agent response generated');
+      response = await askMarketAlphaCopilotAgent(query, history);
+      console.log('Market Alpha Copilot Agent response generated');
     } else if (agentType === 'copilot') {
       // Determine which wallet address to use for Aelys Copilot
       let targetWallet = '';

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChatMessage as ChatMessageType } from '@/lib/chat-storage';
 import { MarketChartData } from '@/lib/types';
-import { MarketInsightChart } from '@/components/ui/market-insight-chart';
+import { MarketAlphaChart } from '@/components/ui/market-alpha-chart';
 import Image from 'next/image';
 
 // Format message content for clean display
