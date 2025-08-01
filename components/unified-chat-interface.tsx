@@ -1,11 +1,14 @@
 "use client"
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ChatMessage, LoadingMessage } from '@/components/ui/chat-message';
+import { EnhancedChatMessage } from '@/components/ui/enhanced-chat-message';
 import { StickyHeader, MobileStickyHeader } from '@/components/ui/sticky-header';
 import { chatStorage, ChatMessage as ChatMessageType } from '@/lib/chat-storage';
+import { MarketChartData } from '@/lib/types';
 import { ArrowUp, Bot, TrendingUp, Loader2 } from 'lucide-react';
 import Spline from '@splinetool/react-spline';
 import { SimpleBorderBeam } from '@/components/ui/simple-border-beam';
@@ -23,11 +26,13 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
   agentType,
   onNewChatExternal 
 }) => {
+  const { user } = usePrivy(); // Get user from Privy to access wallet
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isChatStarted, setIsChatStarted] = useState(false);
+  const [chartDataMap, setChartDataMap] = useState<Record<string, MarketChartData>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -93,6 +98,9 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
     
     try {
 
+      // Get the actual wallet address from Privy or use the provided one
+      const connectedWalletAddress = user?.wallet?.address || '';
+      
       // Call the agent API
       const response = await fetch('/api/agent', {
         method: 'POST',
@@ -101,7 +109,9 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         },
         body: JSON.stringify({
           query: userMessage,
-          history: chatHistory
+          history: chatHistory,
+          agentType: agentType,
+          connectedWallet: connectedWalletAddress
         })
       });
       
@@ -117,6 +127,14 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         'assistant',
         agentResponse.answer || 'I apologize, but I encountered an error processing your request.'
       );
+      
+      // Store chart data if available (for market insights)
+      if (agentResponse.chartData) {
+        setChartDataMap(prev => ({
+          ...prev,
+          [newAgentMessage.id]: agentResponse.chartData
+        }));
+      }
       
       setChatHistory(prev => [...prev, newAgentMessage]);
       
@@ -188,9 +206,24 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
           {/* Chat Messages Area */}
           <div className="flex-1 overflow-y-auto px-4 py-6 chat-scroll">
             <div className="max-w-4xl mx-auto space-y-6 chat-container">
-              {chatHistory.map((entry) => (
-                <ChatMessage key={entry.id} message={entry} agentType={agentType} />
-              ))}
+              {chatHistory.map((entry) => {
+                const chartData = chartDataMap[entry.id];
+                // Use enhanced chat message for market insights with chart support
+                if (agentType === 'market-insights' && entry.role === 'assistant') {
+                  return (
+                    <EnhancedChatMessage 
+                      key={entry.id} 
+                      message={entry} 
+                      agentType={agentType} 
+                      chartData={chartData}
+                    />
+                  );
+                }
+                // Use regular chat message for copilot and user messages
+                return (
+                  <ChatMessage key={entry.id} message={entry} agentType={agentType} />
+                );
+              })}
               {isLoading && (
                 <LoadingMessage agentType={agentType} />
               )}

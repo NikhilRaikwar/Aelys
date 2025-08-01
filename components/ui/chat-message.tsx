@@ -5,6 +5,8 @@ import { Copy, Check, Bot, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChatMessage as ChatMessageType } from '@/lib/chat-storage';
+import { MarketChartData } from '@/lib/types';
+import { MarketInsightChart } from '@/components/ui/market-insight-chart';
 import Image from 'next/image';
 
 // Format message content for clean display
@@ -20,6 +22,7 @@ interface ChatMessageProps {
   message: ChatMessageType;
   agentType: 'copilot' | 'market-insights';
   className?: string;
+  chartData?: MarketChartData;
 }
 
 export function ChatMessage({ message, agentType, className }: ChatMessageProps) {

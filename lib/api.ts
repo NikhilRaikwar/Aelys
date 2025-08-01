@@ -6,13 +6,20 @@ import {
   MarketData,
   FetchNFTDataParams,
   FetchMarketDataParams,
-  FetchWalletAnalyticsParams
+  FetchWalletAnalyticsParams,
+  MarketInsightParams,
+  MarketAnalyticsData,
+  HoldersInsightData,
+  ScoresInsightData,
+  TradersInsightData,
+  WashtradeInsightData
 } from './types';
 
 const apiClient = axios.create({
   baseURL: process.env.UNLEASH_BASE_URL,
   headers: {
-    'Authorization': `Bearer ${process.env.UNLEASH_API_KEY}`,
+    'x-api-key': process.env.UNLEASH_API_KEY,
+    'accept': 'application/json',
     'Content-Type': 'application/json'
   },
   timeout: 30000, // 30 second timeout
@@ -97,3 +104,89 @@ export async function fetchMarketData(params: FetchMarketDataParams): Promise<Ap
   });
 }
 
+// ===== MARKET INSIGHT API FUNCTIONS =====
+
+/**
+ * Get NFT Market Analytics Report
+ * Returns aggregated values and trend data for various NFT market metrics
+ * @param params Market insight parameters
+ */
+export async function getMarketAnalytics(params: MarketInsightParams = {}): Promise<ApiResponse<{ data: MarketAnalyticsData[] }>> {
+  try {
+    const response = await fetchData<{ data: MarketAnalyticsData[] }>('/nft/market-insights/analytics', {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h'
+    });
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch market analytics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get NFT Holders Insights
+ * Returns aggregated values and trends for holders' metrics in the NFT market
+ * @param params Market insight parameters
+ */
+export async function getHolderInsights(params: MarketInsightParams = {}): Promise<ApiResponse<{ data: HoldersInsightData[] }>> {
+  try {
+    const response = await fetchData<{ data: HoldersInsightData[] }>('/nft/market-insights/holders', {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h'
+    });
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch holder insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get NFT Scores Insights
+ * Returns aggregated values and trends for scores in the NFT market
+ * @param params Market insight parameters
+ */
+export async function getScoresInsights(params: MarketInsightParams = {}): Promise<ApiResponse<{ data: ScoresInsightData[] }>> {
+  try {
+    const response = await fetchData<{ data: ScoresInsightData[] }>('/nft/market-insights/scores', {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h'
+    });
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch scores insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get NFT Traders Insights
+ * Returns aggregated values and trends for trader metrics in the NFT market
+ * @param params Market insight parameters
+ */
+export async function getTradersInsights(params: MarketInsightParams = {}): Promise<ApiResponse<{ data: TradersInsightData[] }>> {
+  try {
+    const response = await fetchData<{ data: TradersInsightData[] }>('/nft/market-insights/traders', {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h'
+    });
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch traders insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get NFT Market Washtrade Insights
+ * Returns aggregated values and trends for washtrade metrics in the NFT market
+ * @param params Market insight parameters
+ */
+export async function getMarketWashtrade(params: MarketInsightParams = {}): Promise<ApiResponse<{ data: WashtradeInsightData[] }>> {
+  try {
+    const response = await fetchData<{ data: WashtradeInsightData[] }>('/nft/market-insights/washtrade', {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h'
+    });
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch washtrade insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

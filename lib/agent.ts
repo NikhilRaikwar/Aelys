@@ -7,7 +7,9 @@ import {
   TableData,
   FetchNFTDataParams,
   FetchWalletAnalyticsParams,
-  FetchMarketDataParams
+  FetchMarketDataParams,
+  MarketInsightParams,
+  MarketChartData
 } from './types';
 
 // Debug: Log API key info (first 10 and last 4 chars for security)
@@ -22,6 +24,24 @@ if (!apiKey) {
 const openai = new OpenAI({
   apiKey: apiKey,
 });
+
+// Helper function to call market insight endpoints
+async function callMarketInsightEndpoint(endpointName: string, params: MarketInsightParams) {
+  switch (endpointName) {
+    case 'analytics':
+      return api.getMarketAnalytics(params);
+    case 'holders':
+      return api.getHolderInsights(params);
+    case 'scores':
+      return api.getScoresInsights(params);
+    case 'traders':
+      return api.getTradersInsights(params);
+    case 'washtrade':
+      return api.getMarketWashtrade(params);
+    default:
+      throw new Error('Unknown endpoint');
+  }
+}
 
 const SYSTEM_PROMPT = `You are Aelys, an expert NFT and Web3 analytics agent. You have access to UnleashNFTs API endpoints to answer questions about NFT data, market analytics, and Web3 metrics.
 
@@ -86,34 +106,42 @@ export async function askAelysAgent(
       throw new Error('No response from OpenAI');
     }
 
-    // Try to parse API calls from the response
-    let apiCallInstructions;
-    try {
-      apiCallInstructions = JSON.parse(gptResponse);
-    } catch {
-      // If parsing fails, treat as direct response
-      apiCallInstructions = null;
+// Try to parse API calls from the response
+  let apiCallInstructions;
+  try {
+    apiCallInstructions = JSON.parse(gptResponse);
+  } catch {
+    // If parsing fails, treat as direct response
+    apiCallInstructions = null;
+  }
+
+  // If GPT wants to make API calls, execute them
+  if (apiCallInstructions?.action === 'api_calls' && apiCallInstructions.calls) {
+    const results = [];
+
+    for (const call of apiCallInstructions.calls) {
+      try {
+        const apiResult = await callMarketInsightEndpoint(call.function, call.params);
+        results.push({ function: call.function, data: apiResult.data });
+      } catch (error) {
+        results.push({ function: call.function, error: error.message });
+      }
     }
-
-    // If GPT wants to make API calls, execute them
-    if (apiCallInstructions?.action === 'api_calls' && apiCallInstructions.calls) {
-      const apiResults = await executeApiCalls(apiCallInstructions.calls);
-      
-      // Now ask GPT to analyze the results and provide a final response
-      const analysisMessages: ChatMessage[] = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...chatHistory,
-        { role: 'user', content: userQuery },
-        {
-          role: 'assistant',
-          content: `I've fetched the following data: ${JSON.stringify(apiResults, null, 2)}. Let me analyze this and provide insights.`
-        },
-        {
-          role: 'user',
-          content: 'Please analyze this data and provide a comprehensive response with insights, trends, and any relevant visualizations.'
-        }
-      ];
-
+    
+    // Now ask GPT to analyze the results and provide a final response
+    const analysisMessages: ChatMessage[] = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...chatHistory,
+      { role: 'user', content: userQuery },
+      {
+        role: 'assistant',
+        content: `I've fetched the following data: ${JSON.stringify(results, null, 2)}. Let me analyze this and provide insights.`
+      },
+      {
+        role: 'user',
+        content: 'Please analyze this data and provide a comprehensive response with insights, trends, and any relevant visualizations.'
+      }
+    ];
       const analysisResponse = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: analysisMessages,
