@@ -29,51 +29,56 @@ Built for clarity, speed, and depth, Aelys allows users to connect wallets secur
 
 ### 🚀 **Aelys Copilot – NFT Portfolio Intelligence**
 
-- **Personalized Portfolio Assistant**  
-  Analyzes wallet health, NFT & DeFi holdings, token balances, and scoring metrics to generate insight-rich portfolio summaries tailored to connected wallets.
+- **Personal NFT & Crypto Portfolio Assistant:**
+  Understand, track, and analyze your Web3 portfolio, DeFi holdings, and NFT assets.
+
+- **Wallet & Risk Analysis:**
+  Instant breakdowns of token balances, NFT value, wallet reputation, and activity trends.
 
 - **Risk and Fraud Detection**  
   Detects suspicious wallet behavior, wash trading, and signals potential threats through detailed analytics.
 
 - **Conversational Analytics**  
-  Answer complex portfolio queries naturally—no dashboards, just instant, conversational clarity enhanced with charts and trends.
+  Simply ask any question about your portfolio to get live data, natural explanations, and even risk warnings—all in a private, chat-based flow.
 
-- **Key bitsCrunch APIs Used:**  
-  - `/wallet/balance/defi`  
-  - `/wallet/balance/nft`  
-  - `/wallet/balance/token`  
-  - `/wallet-label`  
-  - `/wallet-score`  
-  - `/wallet-metrics`  
-  - `/nft-wallet-analytics`  
-  - `/nft-wallet-washtrade`  
-  - `/nft-wallet-profile`
+**Key UnleashNFTs APIs Used:**
+
+- `/wallet/balance/defi` — DeFi portfolio breakdown
+- `/wallet/balance/nft` — NFT portfolio overview
+- `/wallet/balance/token` — ERC20/token holdings
+- `/wallet-label` — Wallet label & status
+- `/wallet-score` — Wallet risk/reputation scoring
+- `/wallet-metrics` — Metrics, activity, and P&L
+- `/nft-wallet-analytics` — NFT-specific wallet analytics
+- `/nft-wallet-washtrade` — Wallet-level fraud detection
+- `/nft-wallet-profile` — Detailed wallet profile
 
 ---
 
 ### 📊 **Market Alpha Copilot – NFT Market Insight**
 
-- **Market-Wide Analytics**  
-  Explore aggregated NFT market trends, trading volumes, holder distributions, and more—across popular blockchains and marketplaces.
+- **Market Trend Explorer:**
+  Get comprehensive trend charts, volume metrics, and aggregated market health.
 
-- **Trader & Washtrade Monitoring**  
-  Stay informed on wash trading, whale activity, and market health with continuous insights and dynamic charts.
+- **Traders, Holders, Washtrading Reports:**
+  Analyze live metrics for active traders, whales, holders, and market manipulation/wash trading.
 
-- **Multi-Metric Visualization**  
-  Interactive area charts, trend lines, and summaries brought into the chat interface via advanced chart components.
+- **Easy, Visual Answers:**
+  When you ask about trends, see Area Charts and time-series analytics rendered instantly in the chat.
 
-- **Key bitsCrunch APIs Used:**  
-  - `/nft/market-insights/analytics`  
-  - `/nft/market-insights/holders`  
-  - `/nft/market-insights/scores`  
-  - `/nft/market-insights/traders`  
-  - `/nft/market-insights/washtrade`
+**Key UnleashNFTs APIs Used:**
+
+- `/nft/market-insights/analytics` — Market-wide NFT analytics (volume, sales, transactions)
+- `/nft/market-insights/holders` — NFT holders’ aggregation and trends
+- `/nft/market-insights/scores` — Market-level score trends
+- `/nft/market-insights/traders` — Trader activity analytics
+- `/nft/market-insights/washtrade` — Wash trade metrics over time
 
 ---
 
 ### 🤖 **Unified AI Agents**
 
-- Powered by OpenAI’s GPT models for natural language understanding, intent parsing, and concise answer generation.
+- Both copilots are powered by OpenAI LLMs for smart query understanding, answer generation, and education/explanation of NFT and crypto concepts.
 - Intelligent routing dynamically queries bitsCrunch APIs based on user intent and parameters.
 - Handles missing information gracefully, prompting users for clarifications when needed.
 - Supports multilingual and context-aware dialogue to serve a diverse user base.
@@ -91,40 +96,38 @@ Built for clarity, speed, and depth, Aelys allows users to connect wallets secur
 
 ---
 
-## 🌐 Website
+## 💬 Example Queries to Try
 
-👉 Visit the live project and landing page here:  
-[https://aelys.framer.ai](https://aelys.framer.ai)
+### 📚 **Educational Queries**
+- 🎓 "What is an NFT and how does it work?"
+- 🔒 "How do I secure my crypto wallet?"
+- 💡 "Explain what DeFi means in simple terms"
 
----
+### 🚀 **Aelys Copilot (Wallet & Portfolio)**
+- 💼 "Show me my complete portfolio breakdown"
+- ⚠️ "What's my wallet risk score and any suspicious activity?"
+- 📈 "Get wallet metrics for 0x742d3..."
 
-## 💬 Example Queries to Trial
-
-### For Aelys Copilot (Wallet & Portfolio)
-- What’s my NFT portfolio worth right now?
-- Show my DeFi holdings breakdown.
-- How is my wallet’s risk score trending?
-- Any suspicious transactions or wash trades in my wallet?
-- Compare my trading to the top wallets.
-- What ERC20 tokens do I own?
-- Explain my NFT collection composition.
-
-### For Market Alpha Copilot (Market & Trend Analytics)
-- Show NFT market volume trends for the past week.
-- Which blockchain had the highest number of new holders recently?
-- What’s the current level of wash trading in the NFT market?
-- Summarize active trader trends on Polygon.
-- Display NFT market risk scores for the last 30 days.
-- Show daily changes in sales volume over the past month.
+### 📊 **Market Alpha Copilot (Market Analytics)**
+- 📈 "Show NFT market volume trends for Ethereum"
+- 🔍 "What's the current wash trading activity on Polygon?"
+- 👥 "Display recent trader analytics and buyer/seller ratios"
 
 ---
 
-## 🌟 Why Aelys Stands Out
+## 🌟 Why Aelys Copilot Stands Out
 
-- 🤝 **Integrated AI & Data:** Combines generative AI with rich, real-time blockchain analytics—providing answers, not just data.  
-- 🔮 **Instant Visualizations:** Animated charts and trend visualizations embedded right into your chat conversation.  
-- 🛡️ **Privacy-First:** Wallet data stays private and secure; your portfolio is analyzed only with your permission.  
-- 🧠 **OpenAI × bitsCrunch:** The best of generative AI and market analytics, merged for next-gen user experience.
+- 🤝 **Unified General + Data Intelligence:**
+  Handles both real-time live analytics and all your NFT/crypto general questions in one chat.
+
+- 🔮 **Instant Visuals:**
+  See your data as trendlines, risk cards, or summary charts—no dashboards required.
+
+- 🛡️ **Security by Design:**
+  All portfolio analysis is private; only you see your wallet data and risk scores.
+
+- 🧠 **OpenAI × bitsCrunch:**
+  The best of generative AI and market analytics, merged for next-gen user experience.
 
 ---
 
