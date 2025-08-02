@@ -32,31 +32,52 @@ function isGeneralQuery(query: string): boolean {
   return generalKeywords.some(keyword => lowerQuery.includes(keyword));
 }
 
+// Helper function to extract wallet address from query
+function extractWalletAddress(query: string): string | null {
+  // Look for Ethereum-style addresses (0x followed by 40 hex characters)
+  const addressMatch = query.match(/0x[a-fA-F0-9]{40}/);
+  return addressMatch ? addressMatch[0] : null;
+}
+
+// Helper function to extract blockchain from query
+function extractBlockchain(query: string): string {
+  const lowerQuery = query.toLowerCase();
+  const supportedBlockchains = ['linea', 'polygon', 'ethereum', 'avalanche'];
+  
+  for (const blockchain of supportedBlockchains) {
+    if (lowerQuery.includes(blockchain)) {
+      return blockchain;
+    }
+  }
+  
+  return 'ethereum'; // default
+}
+
 // Helper function to call portfolio endpoints
-async function callPortfolioEndpoint(endpointName: string, walletAddress: string) {
+async function callPortfolioEndpoint(endpointName: string, walletAddress: string, blockchain?: string) {
   switch (endpointName) {
     case 'defi_balance':
-      return getWalletDefiBalance(walletAddress);
+      return getWalletDefiBalance(walletAddress, blockchain || 'ethereum');
     case 'nft_balance':
-      return getWalletNftBalance(walletAddress);
+      return getWalletNftBalance(walletAddress, blockchain || 'ethereum');
     case 'token_balance':
-      return getWalletTokenBalance(walletAddress);
+      return getWalletTokenBalance(walletAddress, blockchain || 'ethereum');
     case 'wallet_label':
-      return getWalletLabel(walletAddress);
+      return getWalletLabel(walletAddress, blockchain || 'ethereum');
     case 'wallet_profile':
       return getNftWalletProfile(walletAddress);
     case 'wallet_score':
       return getWalletScore(walletAddress);
     case 'wallet_metrics':
-      return getWalletMetrics(walletAddress);
+      return getWalletMetrics(walletAddress, blockchain || 'ethereum');
     case 'nft_analytics':
-      return getNftWalletAnalytics(walletAddress);
+      return getNftWalletAnalytics(walletAddress, blockchain || 'ethereum');
     case 'nft_scores':
-      return getNftWalletScores(walletAddress);
+      return getNftWalletScores(walletAddress, blockchain || 'ethereum');
     case 'nft_traders':
-      return getNftWalletTraders(walletAddress);
+      return getNftWalletTraders(walletAddress, blockchain || 'ethereum');
     case 'nft_washtrade':
-      return getNftWalletWashtrade(walletAddress);
+      return getNftWalletWashtrade(walletAddress, blockchain || 'ethereum');
     default:
       throw new Error(`Unknown portfolio endpoint: ${endpointName}`);
   }
@@ -105,6 +126,28 @@ Example mappings:
 
 For general questions, be conversational, educational, and helpful. For wallet queries, use the API to get real data.`;
 
+// Helper function to detect wallet metrics queries
+function isWalletMetricsQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  return (
+    (lowerQuery.includes('metric') || lowerQuery.includes('analytics') || 
+     lowerQuery.includes('show') || lowerQuery.includes('get')) &&
+    (lowerQuery.includes('wallet') || lowerQuery.includes('address') || 
+     lowerQuery.match(/0x[a-fA-F0-9]{40}/))
+  );
+}
+
+// Helper function to detect if user wants detailed response
+function isDetailedQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  return (
+    lowerQuery.includes('detailed') || lowerQuery.includes('full') ||
+    lowerQuery.includes('complete') || lowerQuery.includes('breakdown') ||
+    lowerQuery.includes('analysis') || lowerQuery.includes('deep') ||
+    lowerQuery.includes('comprehensive') || lowerQuery.includes('all')
+  );
+}
+
 export async function askAelysCopilot(
   userQuery: string,
   walletAddress: string = '',
@@ -113,6 +156,117 @@ export async function askAelysCopilot(
   const startTime = Date.now();
 
   try {
+    // Check if this is a wallet metrics query that might have an address in the query
+    if (isWalletMetricsQuery(userQuery)) {
+      const queryWalletAddress = extractWalletAddress(userQuery);
+      const blockchain = extractBlockchain(userQuery);
+      const supportedBlockchains = ['linea', 'polygon', 'ethereum', 'avalanche'];
+      
+      // Check if blockchain is supported
+      if (!supportedBlockchains.includes(blockchain)) {
+        return {
+          answer: `Sorry, I can only fetch wallet metrics for Ethereum, Polygon, Linea, or Avalanche. You requested ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}.`,
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+      
+      // Use wallet address from query if found, otherwise use connected wallet
+      const targetWallet = queryWalletAddress || walletAddress;
+      
+      if (!targetWallet) {
+        return {
+          answer: "I need a wallet address to fetch metrics. Please provide a wallet address in your query or connect your wallet.",
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+      
+      // Make the API call directly for wallet metrics
+      try {
+        const apiResult = await getWalletMetrics(targetWallet, blockchain);
+        
+        // Determine if a detailed query
+        const isDetailed = isDetailedQuery(userQuery);
+
+        // Generate simple or detailed response based on necessity
+        const analysisPrompt = isDetailed
+          ? `Provide a detailed analysis of the following wallet metrics data, including comprehensive insights.
+
+Wallet: ${targetWallet}
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+User Query: "${userQuery}"
+
+Wallet Metrics Data: ${JSON.stringify(apiResult, null, 2)}
+
+Include deep analysis, all metrics, trends, and recommendations. Use # headings and provide comprehensive breakdowns.`
+          : `Generate a VERY CONCISE wallet metrics summary. NO verbose explanations, NO recommendations, NO filler text.
+
+Wallet: ${targetWallet}
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+User Query: "${userQuery}"
+
+Wallet Metrics Data: ${JSON.stringify(apiResult, null, 2)}
+
+Format EXACTLY like this (use actual data from JSON):
+
+**Wallet Metrics for ${targetWallet.slice(0, 6)}...${targetWallet.slice(-4)} on ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}**
+
+• **Total value:** $X.XX USD
+• **ETH balance:** X.XXXXX ETH ($XX.XX)
+• **Token count:** X
+• **First active:** Month Day, Year
+• **Last activity:** Month Day, Year
+• **Total transactions:** X (X in, X out)
+• **Inflow:** X.XX ETH from X addresses ($X,XXX.XX)
+• **Outflow:** X.XX ETH to X addresses ($X,XXX.XX)
+• **Active days:** X
+• **Age:** X days
+• **Risk status:** No illicit volume detected
+
+Keep it factual, brief, and do NOT use # tags anywhere. NO extra commentary or explanations.`;
+        
+        const analysisResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are a crypto wallet analyst. Provide CONCISE responses. Never use # tags anywhere. Never show raw JSON. Avoid verbose explanations and filler text. Use bullet points and be direct. Use **bold text** for emphasis instead of headings.' },
+            { role: 'user', content: analysisPrompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 800,
+        });
+        
+        const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch the wallet metrics but encountered issues analyzing the data.';
+        
+        return {
+          answer: finalAnswer,
+          metadata: {
+            tokensUsed: analysisResponse.usage?.total_tokens || 0,
+            executionTime: Date.now() - startTime,
+          },
+        };
+        
+      } catch (error) {
+        console.error('Wallet metrics API error:', error);
+        if (error.message.includes('Unsupported blockchain')) {
+          return {
+            answer: error.message,
+            metadata: {
+              executionTime: Date.now() - startTime,
+            },
+          };
+        }
+        return {
+          answer: `I encountered an error fetching wallet metrics for ${targetWallet} on ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}. This could be due to API issues or the wallet might not have sufficient data. Please try again later.`,
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+    }
+    
     // Check if this is a general/educational query
     if (isGeneralQuery(userQuery)) {
       const generalSystemPrompt = `You are Aelys Copilot, an expert in NFTs, cryptocurrency, DeFi, Web3, and blockchain technology. Provide clear, educational, and conversational answers to general questions about crypto onboarding, wallet security, NFT concepts, DeFi protocols, and Web3 fundamentals. Focus on being helpful and informative for users learning about these topics.`;
@@ -269,7 +423,11 @@ export async function askAelysCopilot(
         return `**${result.function}**: ${dataStr.length > 500 ? dataStr.substring(0, 500) + '...' : dataStr}`;
       }).join('\n\n');
 
-      const analysisPrompt = `Analyze this wallet data for address ${walletAddress}:
+      // Determine response complexity based on query
+      const isDetailed = isDetailedQuery(userQuery);
+      
+      const analysisPrompt = isDetailed
+        ? `Provide a comprehensive analysis of this wallet data for address ${walletAddress}:
 
 ${dataContext}
 
@@ -277,7 +435,16 @@ User query: "${userQuery}"
 
 ${failedResults.length > 0 ? `Note: Some data sources were unavailable: ${failedResults.map(r => r.function).join(', ')}` : ''}
 
-Provide a conversational, human-friendly analysis that addresses the user's query. Focus on actionable insights, key findings, and recommendations. Use emojis and formatting to make it engaging. Never show raw JSON data.`;
+Provide a detailed, thorough analysis with deep insights, trends, recommendations, and all relevant data points. Include comprehensive breakdowns and actionable advice.`
+        : `Provide a concise analysis of this wallet data for address ${walletAddress}:
+
+${dataContext}
+
+User query: "${userQuery}"
+
+${failedResults.length > 0 ? `Note: Some data sources were unavailable: ${failedResults.map(r => r.function).join(', ')}` : ''}
+
+Focus on key metrics and essential insights only. Keep it brief and highlight the most important findings without unnecessary elaboration. Use bullet points when appropriate.`;
 
       const analysisResponse = await openai.chat.completions.create({
         model: 'gpt-4o-mini',

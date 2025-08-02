@@ -104,8 +104,14 @@ export async function getWalletScore(wallet_address: string, time_range: string 
 }
 
 export async function getWalletMetrics(wallet: string, blockchain: string = 'ethereum', time_range: string = 'all'): Promise<any> {
+  // Restrict to supported blockchains only
+  const supportedBlockchains = ['linea', 'polygon', 'ethereum', 'avalanche'];
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Unsupported blockchain: ${blockchain}. Supported blockchains are: ${supportedBlockchains.join(', ')}`);
+  }
+  
   return fetchFromEndpoint('/wallet/metrics', {
-    blockchain,
+    blockchain: blockchain.toLowerCase(),
     wallet,
     time_range,
     offset: 0,
