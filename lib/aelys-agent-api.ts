@@ -156,10 +156,48 @@ export async function getNftWalletTraders(wallet: string, blockchain: string = '
 }
 
 // Fraud Detection Endpoints
-export async function getNftWalletWashtrade(wallet: string, blockchain: string = 'ethereum', time_range: string = '24h'): Promise<any> {
+export async function getNftWalletWashtrade(wallet?: string, blockchain: string = 'ethereum', time_range: string = '24h'): Promise<any> {
+  // Validate blockchain parameter
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    sort_by: 'washtrade_volume',
+    sort_order: 'desc',
+    time_range,
+    offset: 0,
+    limit: 30
+  };
+  
+  // If wallet address is provided, add it to params for wallet-specific query
+  if (wallet) {
+    params.wallet = wallet;
+  }
+  
+  return fetchFromEndpoint('/nft/wallet/washtrade', params);
+}
+
+// Market-level washtrade endpoint for when no wallet is specified
+export async function getMarketWashtrade(blockchain: string = 'ethereum', time_range: string = '24h'): Promise<any> {
+  // Validate blockchain parameter
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
   return fetchFromEndpoint('/nft/wallet/washtrade', {
-    wallet,
-    blockchain,
+    blockchain: blockchain.toLowerCase(),
     sort_by: 'washtrade_volume',
     sort_order: 'desc',
     time_range,

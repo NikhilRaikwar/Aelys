@@ -42,7 +42,10 @@ function extractWalletAddress(query: string): string | null {
 // Helper function to extract blockchain from query
 function extractBlockchain(query: string): string {
   const lowerQuery = query.toLowerCase();
-  const supportedBlockchains = ['linea', 'polygon', 'ethereum', 'avalanche'];
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
   
   for (const blockchain of supportedBlockchains) {
     if (lowerQuery.includes(blockchain)) {
@@ -51,6 +54,73 @@ function extractBlockchain(query: string): string {
   }
   
   return 'ethereum'; // default
+}
+
+// Helper function to detect washtrade queries
+function isWashtradeQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  return (
+    lowerQuery.includes('wash') || lowerQuery.includes('washtrade') || 
+    lowerQuery.includes('fraud') || lowerQuery.includes('suspicious') ||
+    lowerQuery.includes('suspect') || lowerQuery.includes('manipulation')
+  );
+}
+
+// Helper function to detect if a query is asking for market-level data (not wallet-specific)
+function isMarketLevelQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  
+  // Keywords that indicate market-level intent
+  const marketKeywords = [
+    'market', 'ethereum', 'polygon', 'solana', 'binance', 'avalanche', 'linea',
+    'blockchain', 'network', 'overall', 'general', 'activity on', 'trading on',
+    'volume on', 'trends', 'what\'s the', 'show me', 'any suspicious',
+    'wash trading volume', 'nft market', 'defi market', 'trading volume',
+    'market analytics', 'market insights', 'market data', 'chain activity',
+    'network activity', 'protocol activity'
+  ];
+  
+  // Keywords that indicate wallet-specific intent
+  const walletKeywords = [
+    'my wallet', 'my portfolio', 'my holdings', 'my balance', 'my nfts',
+    'my tokens', 'my defi', 'my score', 'wallet address', 'this wallet',
+    'connected wallet', 'my nft holdings', 'my token balance', 'my defi holdings'
+  ];
+  
+  // Check if query contains wallet address
+  const hasWalletAddress = /0x[a-fA-F0-9]{40}/.test(query);
+  
+  // If query explicitly mentions wallet-specific terms or has an address, it's wallet-specific
+  if (walletKeywords.some(keyword => lowerQuery.includes(keyword)) || hasWalletAddress) {
+    return false;
+  }
+  
+  // If query mentions market-level keywords, it's market-level
+  if (marketKeywords.some(keyword => lowerQuery.includes(keyword))) {
+    return true;
+  }
+  
+  // Default: check for general blockchain/market context without personal pronouns
+  return !lowerQuery.includes('my ') && !lowerQuery.includes('wallet');
+}
+
+// Helper function to detect market insight queries (for routing to market-alpha-copilot)
+function isMarketInsightQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  const marketInsightKeywords = [
+    'market analytics', 'market insights', 'market data', 'market trends',
+    'trading analytics', 'trading insights', 'volume analytics', 'sales analytics',
+    'nft market', 'defi market', 'market overview', 'market summary',
+    'holder analytics', 'trader analytics', 'market scores', 'market sentiment'
+  ];
+  
+  return marketInsightKeywords.some(keyword => lowerQuery.includes(keyword)) ||
+         (isMarketLevelQuery(query) && (
+           lowerQuery.includes('analytics') || lowerQuery.includes('insights') ||
+           lowerQuery.includes('trends') || lowerQuery.includes('volume') ||
+           lowerQuery.includes('trading') || lowerQuery.includes('holders') ||
+           lowerQuery.includes('traders') || lowerQuery.includes('scores')
+         ));
 }
 
 // Helper function to call portfolio endpoints
@@ -212,30 +282,22 @@ Wallet Metrics Data: ${JSON.stringify(apiResult, null, 2)}
 
 Format EXACTLY like this (use actual data from JSON):
 
-**Wallet Metrics for ${targetWallet.slice(0, 6)}...${targetWallet.slice(-4)} on ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}**
+Here's a brief summary of the wallet metrics for ${targetWallet.slice(0, 6)}...${targetWallet.slice(-4)} on ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}. The total value of your wallet is $X.XX USD, with an ETH balance of X.XXXXX ETH ($XX.XX). You have X tokens in your account.
 
-• **Total value:** $X.XX USD
-• **ETH balance:** X.XXXXX ETH ($XX.XX)
-• **Token count:** X
-• **First active:** Month Day, Year
-• **Last activity:** Month Day, Year
-• **Total transactions:** X (X in, X out)
-• **Inflow:** X.XX ETH from X addresses ($X,XXX.XX)
-• **Outflow:** X.XX ETH to X addresses ($X,XXX.XX)
-• **Active days:** X
-• **Age:** X days
-• **Risk status:** No illicit volume detected
+This wallet first became active on Month Day, Year and was last active on Month Day, Year. In total, there have been X transactions with X incoming and X outgoing. The inflow was X.XX ETH from X addresses totaling $X,XXX.XX, while the outflow accounted for X.XX ETH to X addresses totaling $X,XXX.XX.
+
+Your wallet has been active for X days and has an age of X days. Fortunately, there is no illicit volume detected, showcasing that your wallet activities are legitimate and secure. This concise summary provides the essential insights about your wallet's current status.
 
 Keep it factual, brief, and do NOT use # tags anywhere. NO extra commentary or explanations.`;
         
         const analysisResponse = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: 'You are a crypto wallet analyst. Provide CONCISE responses. Never use # tags anywhere. Never show raw JSON. Avoid verbose explanations and filler text. Use bullet points and be direct. Use **bold text** for emphasis instead of headings.' },
+            { role: 'system', content: 'You are a crypto wallet analyst. Provide VERY BRIEF, concise responses in paragraph format. Keep responses under 100 words. Never use # tags or bullet points anywhere. Never show raw JSON. Write in flowing, natural paragraphs. Use **bold text** for key metrics only.' },
             { role: 'user', content: analysisPrompt }
           ],
           temperature: 0.3,
-          max_tokens: 800,
+          max_tokens: 400,
         });
         
         const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch the wallet metrics but encountered issues analyzing the data.';
@@ -264,6 +326,142 @@ Keep it factual, brief, and do NOT use # tags anywhere. NO extra commentary or e
             executionTime: Date.now() - startTime,
           },
         };
+      }
+    }
+    
+    // Check if this is a washtrade query that might not have a wallet address
+    if (isWashtradeQuery(userQuery)) {
+      const queryWalletAddress = extractWalletAddress(userQuery);
+      const blockchain = extractBlockchain(userQuery);
+      
+      // Helper function to detect if user is asking for market-level data
+      function isMarketLevelQuery(query: string): boolean {
+        const lowerQuery = query.toLowerCase();
+        const marketKeywords = [
+          'market', 'ethereum', 'polygon', 'solana', 'binance', 'avalanche', 
+          'blockchain', 'network', 'overall', 'general', 'activity on',
+          'trading on', 'volume on', 'trends', 'what\'s the', 'show me',
+          'any suspicious', 'wash trading volume'
+        ];
+        
+        return marketKeywords.some(keyword => lowerQuery.includes(keyword)) &&
+               !lowerQuery.includes('wallet') &&
+               !lowerQuery.includes('my ') &&
+               !queryWalletAddress;
+      }
+      
+      // If no wallet address found in query OR user is asking for market-level data, run market-level query
+      if (!queryWalletAddress || isMarketLevelQuery(userQuery)) {
+        try {
+          const apiResult = await getNftWalletWashtrade(undefined, blockchain, '24h');
+          
+          const analysisPrompt = `Analyze the following NFT washtrade market data and provide a brief paragraph summary focusing on key washtrade metrics:
+
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+User Query: "${userQuery}"
+
+Washtrade Market Data: ${JSON.stringify(apiResult, null, 2)}
+
+Provide a natural language summary focusing on:
+- washtrade_volume
+- washtrade_suspect_sales  
+- washtrade_suspect_sales_change
+- washtrade_volume_change
+
+Format as a conversational paragraph explaining recent washtrade trends in the ${blockchain} NFT market. Use bullet points only if essential for clarity.`;
+          
+          const analysisResponse = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'You are a crypto market analyst specializing in fraud detection. Provide BRIEF, concise explanations about washtrade patterns. Keep responses under 80 words. Be direct and factual.' },
+              { role: 'user', content: analysisPrompt }
+            ],
+            temperature: 0.3,
+            max_tokens: 300,
+          });
+          
+          const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch washtrade market data but encountered issues analyzing it.';
+          
+          return {
+            answer: finalAnswer,
+            metadata: {
+              tokensUsed: analysisResponse.usage?.total_tokens || 0,
+              executionTime: Date.now() - startTime,
+            },
+          };
+          
+        } catch (error) {
+          console.error('Market washtrade API error:', error);
+          if (error.message.includes('Please specify a valid blockchain')) {
+            return {
+              answer: error.message,
+              metadata: {
+                executionTime: Date.now() - startTime,
+              },
+            };
+          }
+          return {
+            answer: `I encountered an error fetching washtrade data for ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}. This could be due to API issues or insufficient data for the specified blockchain. Please try again later or try a different blockchain.`,
+            metadata: {
+              executionTime: Date.now() - startTime,
+            },
+          };
+        }
+      }
+      
+      // If wallet address is found or connected, proceed with wallet-specific washtrade query
+      const targetWallet = queryWalletAddress || walletAddress;
+      if (targetWallet) {
+        try {
+          const apiResult = await getNftWalletWashtrade(targetWallet, blockchain, '24h');
+          
+          const analysisPrompt = `Analyze the following wallet-specific NFT washtrade data and provide a brief paragraph summary:
+
+Wallet: ${targetWallet}
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+User Query: "${userQuery}"
+
+Wallet Washtrade Data: ${JSON.stringify(apiResult, null, 2)}
+
+Provide a natural language summary focusing on key washtrade metrics for this specific wallet. Use bullet points only if essential for clarity.`;
+          
+          const analysisResponse = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'You are a crypto wallet analyst specializing in fraud detection. Provide clear, conversational explanations about wallet-specific washtrade patterns.' },
+              { role: 'user', content: analysisPrompt }
+            ],
+            temperature: 0.3,
+            max_tokens: 600,
+          });
+          
+          const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch wallet washtrade data but encountered issues analyzing it.';
+          
+          return {
+            answer: finalAnswer,
+            metadata: {
+              tokensUsed: analysisResponse.usage?.total_tokens || 0,
+              executionTime: Date.now() - startTime,
+            },
+          };
+          
+        } catch (error) {
+          console.error('Wallet washtrade API error:', error);
+          if (error.message.includes('Please specify a valid blockchain')) {
+            return {
+              answer: error.message,
+              metadata: {
+                executionTime: Date.now() - startTime,
+              },
+            };
+          }
+          return {
+            answer: `I encountered an error fetching washtrade data for wallet ${targetWallet} on ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}. This could be due to API issues or the wallet might not have sufficient data. Please try again later.`,
+            metadata: {
+              executionTime: Date.now() - startTime,
+            },
+          };
+        }
       }
     }
     
@@ -331,57 +529,92 @@ Keep it factual, brief, and do NOT use # tags anywhere. NO extra commentary or e
       apiCallInstructions = null;
     }
 
-    // Fallback: If GPT didn't return JSON but the query is wallet-specific, force API calls
-    if (!apiCallInstructions && walletAddress) {
+    // Check if this should be routed to Market Alpha Copilot for market-level insights
+    if (!apiCallInstructions && isMarketInsightQuery(userQuery)) {
+      // Import and call Market Alpha Copilot
+      const { askMarketAlphaCopilotAgent } = await import('./market-alpha-copilot-agent');
+      return await askMarketAlphaCopilotAgent(userQuery, chatHistory);
+    }
+    
+    // For market-level queries that don't need market insights, provide direct educational response
+    if (!apiCallInstructions && isMarketLevelQuery(userQuery)) {
+      const marketSystemPrompt = `You are Aelys Copilot, an expert in NFT and crypto markets. The user is asking about general market activity or trends, not about their personal wallet. Provide informative, educational responses about market conditions, trends, and general blockchain activity. Focus on explaining market concepts and general insights without making API calls.`;
+      
+      const marketResponse = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: marketSystemPrompt },
+          ...chatHistory,
+          { role: 'user', content: userQuery }
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      });
+      
+      return {
+        answer: marketResponse.choices[0]?.message?.content || "I'm sorry, I couldn't provide market information for your query.",
+        metadata: {
+          tokensUsed: marketResponse.usage?.total_tokens || 0,
+          executionTime: Date.now() - startTime,
+        }
+      };
+    }
+    
+    // Fallback: If GPT didn't return JSON but the query is EXPLICITLY wallet-specific, force API calls
+    if (!apiCallInstructions && walletAddress && !isMarketLevelQuery(userQuery)) {
       const lowerQuery = userQuery.toLowerCase();
       
-      if (lowerQuery.includes('score') || lowerQuery.includes('risk')) {
-        apiCallInstructions = {
-          action: 'api_calls',
-          calls: [{ function: 'wallet_score', params: {} }],
-          explanation: 'Fetching wallet score data'
-        };
-      } else if (lowerQuery.includes('defi') || lowerQuery.includes('protocol')) {
-        apiCallInstructions = {
-          action: 'api_calls',
-          calls: [{ function: 'defi_balance', params: {} }],
-          explanation: 'Fetching DeFi portfolio data'
-        };
-      } else if (lowerQuery.includes('nft') || lowerQuery.includes('collection')) {
-        apiCallInstructions = {
-          action: 'api_calls',
-          calls: [{ function: 'nft_balance', params: {} }],
-          explanation: 'Fetching NFT portfolio data'
-        };
-      } else if (lowerQuery.includes('token') || lowerQuery.includes('balance')) {
-        apiCallInstructions = {
-          action: 'api_calls',
-          calls: [{ function: 'token_balance', params: {} }],
-          explanation: 'Fetching token balance data'
-        };
-      } else if (lowerQuery.includes('portfolio') || lowerQuery.includes('holding')) {
-        apiCallInstructions = {
-          action: 'api_calls',
-          calls: [
-            { function: 'defi_balance', params: {} },
-            { function: 'nft_balance', params: {} },
-            { function: 'token_balance', params: {} },
-            { function: 'wallet_score', params: {} }
-          ],
-          explanation: 'Fetching comprehensive portfolio data'
-        };
-      } else if (lowerQuery.includes('trading') || lowerQuery.includes('performance')) {
-        apiCallInstructions = {
-          action: 'api_calls',
-          calls: [{ function: 'nft_analytics', params: {} }],
-          explanation: 'Fetching trading performance data'
-        };
-      } else if (lowerQuery.includes('wash') || lowerQuery.includes('fraud')) {
-        apiCallInstructions = {
-          action: 'api_calls',
-          calls: [{ function: 'nft_washtrade', params: {} }],
-          explanation: 'Fetching wash trading analysis'
-        };
+      // Only force wallet API calls if the query explicitly mentions personal/wallet terms
+      const isExplicitlyWalletSpecific = 
+        lowerQuery.includes('my wallet') || lowerQuery.includes('my portfolio') ||
+        lowerQuery.includes('my holdings') || lowerQuery.includes('my balance') ||
+        lowerQuery.includes('my nfts') || lowerQuery.includes('my tokens') ||
+        lowerQuery.includes('my defi') || lowerQuery.includes('my score') ||
+        extractWalletAddress(userQuery) !== null;
+      
+      if (isExplicitlyWalletSpecific) {
+        if (lowerQuery.includes('score') || lowerQuery.includes('risk')) {
+          apiCallInstructions = {
+            action: 'api_calls',
+            calls: [{ function: 'wallet_score', params: {} }],
+            explanation: 'Fetching wallet score data'
+          };
+        } else if (lowerQuery.includes('defi') || lowerQuery.includes('protocol')) {
+          apiCallInstructions = {
+            action: 'api_calls',
+            calls: [{ function: 'defi_balance', params: {} }],
+            explanation: 'Fetching DeFi portfolio data'
+          };
+        } else if (lowerQuery.includes('nft') || lowerQuery.includes('collection')) {
+          apiCallInstructions = {
+            action: 'api_calls',
+            calls: [{ function: 'nft_balance', params: {} }],
+            explanation: 'Fetching NFT portfolio data'
+          };
+        } else if (lowerQuery.includes('token') || lowerQuery.includes('balance')) {
+          apiCallInstructions = {
+            action: 'api_calls',
+            calls: [{ function: 'token_balance', params: {} }],
+            explanation: 'Fetching token balance data'
+          };
+        } else if (lowerQuery.includes('portfolio') || lowerQuery.includes('holding')) {
+          apiCallInstructions = {
+            action: 'api_calls',
+            calls: [
+              { function: 'defi_balance', params: {} },
+              { function: 'nft_balance', params: {} },
+              { function: 'token_balance', params: {} },
+              { function: 'wallet_score', params: {} }
+            ],
+            explanation: 'Fetching comprehensive portfolio data'
+          };
+        } else if (lowerQuery.includes('trading') || lowerQuery.includes('performance')) {
+          apiCallInstructions = {
+            action: 'api_calls',
+            calls: [{ function: 'nft_analytics', params: {} }],
+            explanation: 'Fetching trading performance data'
+          };
+        }
       }
     }
 
@@ -449,11 +682,11 @@ Focus on key metrics and essential insights only. Keep it brief and highlight th
       const analysisResponse = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a helpful crypto portfolio analyst. Analyze the provided wallet data and respond in a conversational, user-friendly manner. Focus on insights, not raw data.' },
+          { role: 'system', content: 'You are a helpful crypto portfolio analyst. Provide BRIEF, concise analysis in paragraph format. Keep responses under 120 words. Focus on key insights only, not raw data. Be direct and factual.' },
           { role: 'user', content: analysisPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 500,
       });
 
       const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch some of your portfolio data, but encountered issues analyzing it. Please try asking a more specific question.';

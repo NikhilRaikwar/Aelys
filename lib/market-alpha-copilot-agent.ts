@@ -397,28 +397,27 @@ export async function askMarketAlphaCopilotAgent(
       }
 
       // Now ask GPT to analyze the results and provide a final response
-      const analysisPrompt = `You are a market analyst. Analyze the following NFT market data and provide insights in simple, conversational language.
+      const analysisPrompt = `You are a market analyst. Analyze the following NFT market data and provide BRIEF insights in simple, conversational language.
 
 User Query: ${userQuery}
 
 Market Data: ${JSON.stringify(results, null, 2)}
 
-Provide a comprehensive analysis that includes:
+Provide a concise analysis under 120 words that includes:
 1. Key trends and patterns in the data
 2. Notable changes or movements
-3. What this means for the NFT market
-4. Mention that a visualization is provided below
+3. Brief chart conclusion if visualization data is available
 
-Write in a friendly, conversational tone as if explaining to someone interested in NFT markets.`;
+Write in a friendly, direct tone. Be factual and concise.`;
 
       const analysisResponse = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a helpful NFT market analyst. Provide clear, conversational insights about market data.' },
+          { role: 'system', content: 'You are a helpful NFT market analyst. Provide VERY BRIEF, conversational insights about market data. Keep responses under 120 words. Focus on key trends only. Include brief chart conclusion when chart data is available.' },
           { role: 'user', content: analysisPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 500,
       });
 
       const finalAnswer = analysisResponse.choices[0]?.message?.content || 'Unable to analyze the market data.';
