@@ -103,6 +103,10 @@ Multilingual and context-aware responses for all users.
 - Display NFT market risk scores for the last 30 days.
 - What are the daily changes in sales volume this month?
 
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## Why Aelys Copilot Stands Out
 
 - 🤝 **Unified General + Data Intelligence:**
