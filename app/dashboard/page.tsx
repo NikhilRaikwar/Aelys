@@ -15,6 +15,11 @@ export default function Dashboard() {
     router.replace("/") // Use replace instead of push
   }, [router])
 
+  // Set document title
+  useEffect(() => {
+    document.title = "Dashboard - Aelys Copilot | Powered by bitsCrunch APIs"
+  }, [])
+
   // Fast redirect if not authenticated
   useEffect(() => {
     if (ready && !authenticated) {

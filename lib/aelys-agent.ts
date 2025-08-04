@@ -123,34 +123,107 @@ function isMarketInsightQuery(query: string): boolean {
          ));
 }
 
-// Helper function to call portfolio endpoints
-async function callPortfolioEndpoint(endpointName: string, walletAddress: string, blockchain?: string) {
+// Helper function to detect sort_by preference from user query
+function detectSortByPreference(query: string, endpointType: string): string {
+  const lowerQuery = query.toLowerCase();
+  
+  // NFT Analytics sort preferences
+  if (endpointType === 'nft_analytics') {
+    if (lowerQuery.includes('sales') || lowerQuery.includes('sold')) return 'sales';
+    if (lowerQuery.includes('mint') || lowerQuery.includes('minted')) return 'nft_mint';
+    if (lowerQuery.includes('bought') || lowerQuery.includes('purchase')) return 'nft_bought';
+    if (lowerQuery.includes('burn') || lowerQuery.includes('burned')) return 'nft_burn';
+    if (lowerQuery.includes('transfer')) return 'nft_transfer';
+    if (lowerQuery.includes('transactions')) return 'transactions';
+    if (lowerQuery.includes('change') || lowerQuery.includes('trend')) return 'volume_change';
+    return 'volume'; // default
+  }
+  
+  // NFT Scores sort preferences
+  if (endpointType === 'nft_scores') {
+    if (lowerQuery.includes('profit') && lowerQuery.includes('unrealized')) return 'unrealized_profit';
+    if (lowerQuery.includes('profit') && lowerQuery.includes('realized')) return 'realized_profit';
+    if (lowerQuery.includes('collection') || lowerQuery.includes('collections')) return 'collection_count';
+    if (lowerQuery.includes('nft count') || lowerQuery.includes('number of nft')) return 'nft_count';
+    if (lowerQuery.includes('washtrade') || lowerQuery.includes('wash trade')) return 'washtrade_nft_count';
+    if (lowerQuery.includes('estimated')) return 'estimated_portfolio_value';
+    return 'portfolio_value'; // default
+  }
+  
+  // NFT Traders sort preferences
+  if (endpointType === 'nft_traders') {
+    if (lowerQuery.includes('buyer') || lowerQuery.includes('buyers')) return 'traders_buyers';
+    if (lowerQuery.includes('seller') || lowerQuery.includes('sellers')) return 'traders_sellers';
+    if (lowerQuery.includes('change') || lowerQuery.includes('trend')) return 'traders_change';
+    return 'traders'; // default
+  }
+  
+  // NFT Washtrade sort preferences
+  if (endpointType === 'nft_washtrade') {
+    if (lowerQuery.includes('suspect') || lowerQuery.includes('suspicious')) return 'washtrade_suspect_sales';
+    if (lowerQuery.includes('change') || lowerQuery.includes('trend')) return 'washtrade_volume_change';
+    return 'washtrade_volume'; // default
+  }
+  
+  return 'default';
+}
+
+// Helper function to call portfolio endpoints with smart sort_by detection
+async function callPortfolioEndpoint(endpointName: string, walletAddress: string, blockchain?: string, userQuery?: string) {
+  const targetBlockchain = blockchain || 'ethereum';
+  
   switch (endpointName) {
     case 'defi_balance':
-      return getWalletDefiBalance(walletAddress, blockchain || 'ethereum');
+      return getWalletDefiBalance(walletAddress, targetBlockchain);
     case 'nft_balance':
-      return getWalletNftBalance(walletAddress, blockchain || 'ethereum');
+      return getWalletNftBalance(walletAddress, targetBlockchain);
     case 'token_balance':
-      return getWalletTokenBalance(walletAddress, blockchain || 'ethereum');
+      return getWalletTokenBalance(walletAddress, targetBlockchain);
     case 'wallet_label':
-      return getWalletLabel(walletAddress, blockchain || 'ethereum');
+      return getWalletLabel(walletAddress, targetBlockchain);
     case 'wallet_profile':
       return getNftWalletProfile(walletAddress);
     case 'wallet_score':
       return getWalletScore(walletAddress);
     case 'wallet_metrics':
-      return getWalletMetrics(walletAddress, blockchain || 'ethereum');
-    case 'nft_analytics':
-      return getNftWalletAnalytics(walletAddress, blockchain || 'ethereum');
-    case 'nft_scores':
-      return getNftWalletScores(walletAddress, blockchain || 'ethereum');
-    case 'nft_traders':
-      return getNftWalletTraders(walletAddress, blockchain || 'ethereum');
-    case 'nft_washtrade':
-      return getNftWalletWashtrade(walletAddress, blockchain || 'ethereum');
+      return getWalletMetrics(walletAddress, targetBlockchain);
+    case 'nft_analytics': {
+      const sortBy = userQuery ? detectSortByPreference(userQuery, 'nft_analytics') : 'volume';
+      return getNftWalletAnalytics(walletAddress, targetBlockchain, 'all', sortBy as any);
+    }
+    case 'nft_scores': {
+      const sortBy = userQuery ? detectSortByPreference(userQuery, 'nft_scores') : 'portfolio_value';
+      return getNftWalletScores(walletAddress, targetBlockchain, '24h', sortBy as any);
+    }
+    case 'nft_traders': {
+      const sortBy = userQuery ? detectSortByPreference(userQuery, 'nft_traders') : 'traders';
+      return getNftWalletTraders(walletAddress, targetBlockchain, '24h', sortBy as any);
+    }
+    case 'nft_washtrade': {
+      const sortBy = userQuery ? detectSortByPreference(userQuery, 'nft_washtrade') : 'washtrade_volume';
+      return getNftWalletWashtrade(walletAddress, targetBlockchain, '24h', sortBy as any);
+    }
     default:
       throw new Error(`Unknown portfolio endpoint: ${endpointName}`);
   }
+}
+
+// Helper function to call multiple endpoints for comprehensive analysis
+async function callMultipleEndpoints(walletAddress: string, blockchain: string, userQuery: string) {
+  const endpoints = ['nft_analytics', 'nft_scores', 'nft_traders', 'nft_washtrade'];
+  const results = [];
+  
+  for (const endpoint of endpoints) {
+    try {
+      const result = await callPortfolioEndpoint(endpoint, walletAddress, blockchain, userQuery);
+      results.push({ endpoint, data: result, success: true });
+    } catch (error) {
+      console.error(`Failed to call ${endpoint}:`, error.message);
+      results.push({ endpoint, error: error.message, success: false });
+    }
+  }
+  
+  return results;
 }
 
 const AELYS_COPILOT_SYSTEM_PROMPT = `You are Aelys Copilot, an expert NFT Portfolio & Wallet Intelligence AI assistant. You specialize in analyzing connected wallets and providing personalized portfolio insights, as well as answering general questions about NFTs, crypto, Web3, and blockchain concepts.

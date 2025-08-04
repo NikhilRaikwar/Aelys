@@ -16,6 +16,11 @@ export default function LoginPage() {
     router.replace("/dashboard")
   }, [router])
 
+  // Set document title
+  useEffect(() => {
+    document.title = "Connect Wallet - Aelys Copilot | Powered by bitsCrunch APIs"
+  }, [])
+
   // Fast redirect on authentication
   useEffect(() => {
     if (ready && authenticated) {

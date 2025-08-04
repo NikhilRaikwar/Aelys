@@ -10,8 +10,8 @@ import { ThemeProvider } from "../contexts/theme-context"
 import ThemeScript from "../components/theme-script"
 
 export const metadata: Metadata = {
-  title: "Aelys Copilot",
-  description: "Instant. Intelligent. Insightful NFT and Web3 insights.",
+  title: "Aelys Copilot | Powered by bitsCrunch APIs",
+  description: "Unlock real-time NFT analytics, portfolio tracking, and market insights with Aelys Copilot. Powered by bitsCrunch APIs, our AI assistant delivers instant answers, visualizations, and multilingual support for your NFT and Web3 journey.",
     generator: 'v0.dev'
 }
 

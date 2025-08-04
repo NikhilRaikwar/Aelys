@@ -119,23 +119,46 @@ export async function getWalletMetrics(wallet: string, blockchain: string = 'eth
   });
 }
 
-export async function getNftWalletAnalytics(wallet: string, blockchain: string = 'ethereum', time_range: string = 'all'): Promise<any> {
+// Available sort_by options for NFT Wallet Analytics endpoint
+type NftWalletAnalyticsSortBy = 
+  | 'volume' | 'sales' | 'transactions' | 'transfers' 
+  | 'nft_burn' | 'nft_transfer' | 'nft_mint' | 'nft_bought' | 'nft_sold' | 'minted_value'
+  | 'volume_change' | 'sales_change' | 'transactions_change' | 'transfers_change'
+  | 'nft_burn_change' | 'nft_transfer_change' | 'nft_mint_change' | 'nft_bought_change' | 'nft_sold_change' | 'minted_value_change'
+  | 'buy_volume' | 'sell_volume';
+
+export async function getNftWalletAnalytics(
+  wallet: string, 
+  blockchain: string = 'ethereum', 
+  time_range: string = 'all',
+  sort_by: NftWalletAnalyticsSortBy = 'volume'
+): Promise<any> {
   return fetchFromEndpoint('/nft/wallet/analytics', {
     wallet,
     blockchain,
     time_range,
-    sort_by: 'volume',
+    sort_by,
     sort_order: 'desc',
     offset: 0,
     limit: 30
   });
 }
 
-export async function getNftWalletScores(wallet: string, blockchain: string = 'ethereum', time_range: string = '24h'): Promise<any> {
+// Available sort_by options for NFT Wallet Scores endpoint
+type NftWalletScoresSortBy = 
+  | 'portfolio_value' | 'unrealized_profit' | 'estimated_portfolio_value'
+  | 'collection_count' | 'nft_count' | 'washtrade_nft_count' | 'realized_profit';
+
+export async function getNftWalletScores(
+  wallet: string, 
+  blockchain: string = 'ethereum', 
+  time_range: string = '24h',
+  sort_by: NftWalletScoresSortBy = 'portfolio_value'
+): Promise<any> {
   return fetchFromEndpoint('/nft/wallet/scores', {
     wallet,
     blockchain,
-    sort_by: 'portfolio_value',
+    sort_by,
     sort_order: 'desc',
     time_range,
     offset: 0,
@@ -143,20 +166,38 @@ export async function getNftWalletScores(wallet: string, blockchain: string = 'e
   });
 }
 
-export async function getNftWalletTraders(wallet: string, blockchain: string = 'ethereum', time_range: string = '24h'): Promise<any> {
+// Available sort_by options for NFT Wallet Traders endpoint
+type NftWalletTradersSortBy = 
+  | 'traders' | 'traders_change' | 'traders_buyers'
+  | 'traders_buyers_change' | 'traders_sellers' | 'traders_sellers_change';
+
+export async function getNftWalletTraders(
+  wallet: string, 
+  blockchain: string = 'ethereum', 
+  time_range: string = '24h',
+  sort_by: NftWalletTradersSortBy = 'traders'
+): Promise<any> {
   return fetchFromEndpoint('/nft/wallet/traders', {
     wallet,
     blockchain,
     time_range,
-    sort_by: 'traders',
+    sort_by,
     sort_order: 'desc',
     offset: 0,
     limit: 30
   });
 }
 
-// Fraud Detection Endpoints
-export async function getNftWalletWashtrade(wallet?: string, blockchain: string = 'ethereum', time_range: string = '24h'): Promise<any> {
+// Available sort_by options for NFT Wallet Washtrade endpoint
+type NftWalletWashtradeSortBy = 
+  | 'washtrade_volume' | 'washtrade_suspect_sales' | 'washtrade_suspect_sales_change' | 'washtrade_volume_change';
+
+export async function getNftWalletWashtrade(
+  wallet?: string, 
+  blockchain: string = 'ethereum', 
+  time_range: string = '24h',
+  sort_by: NftWalletWashtradeSortBy = 'washtrade_volume'
+): Promise<any> {
   // Validate blockchain parameter
   const supportedBlockchains = [
     'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
@@ -169,7 +210,7 @@ export async function getNftWalletWashtrade(wallet?: string, blockchain: string 
   
   const params: Record<string, any> = {
     blockchain: blockchain.toLowerCase(),
-    sort_by: 'washtrade_volume',
+    sort_by,
     sort_order: 'desc',
     time_range,
     offset: 0,

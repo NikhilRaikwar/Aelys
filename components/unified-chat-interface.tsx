@@ -160,7 +160,6 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
       sendMessage();
     }
   };
-
   const handleSplineError = useCallback((error: any) => {
     console.error(`Spline error:`, error);
   }, []);

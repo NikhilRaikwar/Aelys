@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { usePrivy } from "@privy-io/react-auth"
 import { useRouter } from "next/navigation"
 import { chatStorage } from "@/lib/chat-storage"
-
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { UnifiedChatInterface } from "@/components/unified-chat-interface"
@@ -83,13 +82,15 @@ export function ChatDashboard() {
       />
       <SidebarInset>
         {/* Sticky header with sidebar trigger and new chat button */}
-        <StickyHeader onNewChat={() => {
-          // Clear chat history for current agent and reset interface
-          chatStorage.clearChatHistory(activeAgent as 'copilot' | 'market-insights');
-          // Scroll to top immediately
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          setRefreshKey(prev => prev + 1); // Force refresh of chat interface
-        }} />
+        <StickyHeader 
+          onNewChat={() => {
+            // Clear chat history for current agent and reset interface
+            chatStorage.clearChatHistory(activeAgent as 'copilot' | 'market-insights');
+            // Scroll to top immediately
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setRefreshKey(prev => prev + 1); // Force refresh of chat interface
+          }}
+        />
         <MobileStickyHeader onNewChat={() => {
           // Clear chat history for current agent and reset interface  
           chatStorage.clearChatHistory(activeAgent as 'copilot' | 'market-insights');

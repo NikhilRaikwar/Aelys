@@ -73,8 +73,13 @@ export default function Home() {
       {/* Centered Navigation Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-8 px-4">
         <nav className="flex items-center justify-between w-full max-w-4xl bg-black/20 backdrop-blur-xl border border-white/10 rounded-full px-8 py-4 shadow-lg shadow-black/20">
-          {/* Logo and Brand */}
-          <div className="flex items-center space-x-3">
+          {/* Logo and Brand - Clickable */}
+          <a 
+            href="https://aelys.framer.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity duration-200"
+          >
             <Image 
               src="/logo.png" 
               alt="Aelys Logo" 
@@ -83,7 +88,7 @@ export default function Home() {
               className="rounded-lg"
             />
             <span className="text-xl font-bold text-white">Aelys</span>
-          </div>
+          </a>
           
           {/* Navigation Links */}
           <div className="flex items-center space-x-8">

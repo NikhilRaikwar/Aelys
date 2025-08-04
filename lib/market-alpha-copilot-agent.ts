@@ -30,6 +30,16 @@ function isGeneralQuery(query: string): boolean {
   return generalKeywords.some(keyword => lowerQuery.includes(keyword));
 }
 
+// Helper function to detect if a query explicitly asks for charts
+function isChartQuery(query: string): boolean {
+  const chartKeywords = [
+    'chart', 'graph', 'visualization', 'plot', 'trend', 'visualize',
+    'show me', 'display', 'trends', 'over time', 'time series'
+  ];
+  const lowerQuery = query.toLowerCase();
+  return chartKeywords.some(keyword => lowerQuery.includes(keyword));
+}
+
 // Helper function to call market insight endpoints
 async function callMarketInsightEndpoint(endpointName: string, params: MarketInsightParams) {
   switch (endpointName) {
