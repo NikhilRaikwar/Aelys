@@ -5,8 +5,9 @@ import { Copy, Check, Bot, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChatMessage as ChatMessageType } from '@/lib/chat-storage';
-import { MarketChartData } from '@/lib/types';
+import { MarketChartData, TableData } from '@/lib/types';
 import { MarketAlphaChart } from '@/components/ui/market-alpha-chart';
+import { CollectionTable } from '@/components/ui/collection-table';
 import Image from 'next/image';
 
 // Format message content for clean display
@@ -23,9 +24,10 @@ interface ChatMessageProps {
   agentType: 'copilot' | 'market-insights';
   className?: string;
   chartData?: MarketChartData;
+  tableData?: TableData;
 }
 
-export function ChatMessage({ message, agentType, className }: ChatMessageProps) {
+export function ChatMessage({ message, agentType, className, tableData }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -93,12 +95,19 @@ export function ChatMessage({ message, agentType, className }: ChatMessageProps)
       </div>
 
       {/* Message Content - simple bubble */}
-      <div className="flex-1 min-w-0 relative max-w-[80%]">
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm">
+      <div className="flex-1 min-w-0 relative max-w-full">
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm max-w-[80%]">
           <div className="text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
             <SimpleFormattedContent content={message.content} />
           </div>
         </div>
+        
+        {/* Table Data - Full width */}
+        {tableData && (
+          <div className="mt-4 w-full">
+            <CollectionTable data={tableData} />
+          </div>
+        )}
         
         {/* Copy button */}
         <div className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">

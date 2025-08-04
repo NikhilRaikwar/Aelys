@@ -12,7 +12,9 @@ import {
   HoldersInsightData,
   ScoresInsightData,
   TradersInsightData,
-  WashtradeInsightData
+  WashtradeInsightData,
+  CollectionWhalesParams,
+  CollectionWhalesData
 } from './types';
 
 const apiClient = axios.create({
@@ -188,5 +190,169 @@ export async function getMarketWashtrade(params: MarketInsightParams = {}): Prom
     return response;
   } catch (error) {
     throw new Error(`Failed to fetch washtrade insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get Collection Whales
+ * Returns detailed insights into the whale metrics for NFT collections
+ * @param params Collection whales parameters
+ */
+export async function getCollectionWhales(params: CollectionWhalesParams = {}): Promise<ApiResponse<CollectionWhalesData[]>> {
+  try {
+    const queryParams: Record<string, any> = {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h',
+      offset: params.offset || 0,
+      limit: params.limit || 30,
+      sort_by: params.sort_by || 'nft_count',
+      sort_order: params.sort_order || 'desc'
+    };
+
+    // Add contract addresses if provided
+    if (params.contract_address && params.contract_address.length > 0) {
+      queryParams.contract_address = params.contract_address;
+    }
+
+    const response = await fetchData<CollectionWhalesData[]>('/nft/collection/whales', queryParams);
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch collection whales: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// ===== NEW NFT API ENDPOINTS =====
+
+/**
+ * Get NFT Floor Price
+ * Returns floor price data for NFT collections
+ * @param params Floor price parameters
+ */
+export async function getNFTFloorPrice(params: { contract_address?: string; blockchain?: string } = {}): Promise<ApiResponse<any>> {
+  try {
+    const queryParams: Record<string, any> = {
+      blockchain: params.blockchain || 'ethereum'
+    };
+    
+    if (params.contract_address) {
+      queryParams.contract_address = params.contract_address;
+    }
+    
+    const response = await fetchData('/nft/floor-price', queryParams);
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch NFT floor price: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get NFT Analytics
+ * Returns detailed analytics for NFT collections
+ * @param params NFT analytics parameters
+ */
+export async function getNFTAnalytics(params: { contract_address?: string; blockchain?: string; time_range?: string } = {}): Promise<ApiResponse<any>> {
+  try {
+    const queryParams: Record<string, any> = {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h'
+    };
+    
+    if (params.contract_address) {
+      queryParams.contract_address = params.contract_address;
+    }
+    
+    const response = await fetchData('/nft/analytics', queryParams);
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch NFT analytics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get NFT Listings
+ * Returns current listings for NFT collections
+ * @param params NFT listings parameters
+ */
+export async function getNFTListings(params: { contract_address?: string; blockchain?: string; limit?: number; offset?: number } = {}): Promise<ApiResponse<any>> {
+  try {
+    const queryParams: Record<string, any> = {
+      blockchain: params.blockchain || 'ethereum',
+      limit: params.limit || 50,
+      offset: params.offset || 0
+    };
+    
+    if (params.contract_address) {
+      queryParams.contract_address = params.contract_address;
+    }
+    
+    const response = await fetchData('/nft/listings', queryParams);
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch NFT listings: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get Token Balance
+ * Returns token balance for a wallet address
+ * @param params Token balance parameters
+ */
+export async function getTokenBalance(params: { wallet_address: string; blockchain?: string; token_type?: string } = { wallet_address: '' }): Promise<ApiResponse<any>> {
+  try {
+    const queryParams: Record<string, any> = {
+      wallet_address: params.wallet_address,
+      blockchain: params.blockchain || 'ethereum',
+      token_type: params.token_type || 'ERC721'
+    };
+    
+    const response = await fetchData('/wallet/token-balance', queryParams);
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch token balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get Marketplace Metadata
+ * Returns metadata for marketplace analytics
+ * @param params Marketplace metadata parameters
+ */
+export async function getMarketplaceMetadata(params: { marketplace?: string; blockchain?: string } = {}): Promise<ApiResponse<any>> {
+  try {
+    const queryParams: Record<string, any> = {
+      blockchain: params.blockchain || 'ethereum'
+    };
+    
+    if (params.marketplace) {
+      queryParams.marketplace = params.marketplace;
+    }
+    
+    const response = await fetchData('/marketplace/metadata', queryParams);
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch marketplace metadata: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get Marketplace Analytics
+ * Returns analytics data for marketplaces
+ * @param params Marketplace analytics parameters
+ */
+export async function getMarketplaceAnalytics(params: { marketplace?: string; blockchain?: string; time_range?: string } = {}): Promise<ApiResponse<any>> {
+  try {
+    const queryParams: Record<string, any> = {
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || '24h'
+    };
+    
+    if (params.marketplace) {
+      queryParams.marketplace = params.marketplace;
+    }
+    
+    const response = await fetchData('/marketplace/analytics', queryParams);
+    return response;
+  } catch (error) {
+    throw new Error(`Failed to fetch marketplace analytics: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

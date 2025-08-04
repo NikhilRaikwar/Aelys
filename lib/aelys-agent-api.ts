@@ -247,3 +247,352 @@ export async function getMarketWashtrade(blockchain: string = 'ethereum', time_r
   });
 }
 
+// Available sort_by options for NFT Washtrade endpoint (specific NFT analysis)
+type NFTWashtradeSortBy = 
+  | 'washtrade_volume' | 'washtrade_suspect_sales' | 'washtrade_assets' | 'washtrade_wallets'
+  | 'washtrade_volume_change' | 'washtrade_suspect_sales_change' | 'washtrade_assets_change' 
+  | 'washtrade_wallets_change' | 'washtrade_suspect_transactions' | 'washtrade_suspect_transactions_change';
+
+export async function getNFTWashtrade(
+  contract_address?: string[],
+  token_id?: string[],
+  blockchain: string = 'ethereum',
+  time_range: string = '24h',
+  sort_by: NFTWashtradeSortBy = 'washtrade_volume'
+): Promise<any> {
+  // Validate blockchain parameter
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_by,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  // Add contract addresses if provided
+  if (contract_address && contract_address.length > 0) {
+    params.contract_address = contract_address;
+  }
+  
+  // Add token IDs if provided
+  if (token_id && token_id.length > 0) {
+    params.token_id = token_id;
+  }
+  
+  return fetchFromEndpoint('/nft/washtrade', params);
+}
+
+// Available sort_by options for Collection Whales endpoint
+type CollectionWhalesSortBy = 
+  | 'nft_count' | 'mint_count' | 'mint_volume' | 'mint_whales'
+  | 'unique_wallets' | 'unique_mint_wallets' | 'unique_buy_wallets' | 'unique_sell_wallets'
+  | 'total_mint_volume' | 'total_sale_volume' | 'buy_count' | 'buy_volume' | 'buy_whales'
+  | 'sell_count' | 'sell_volume' | 'sell_whales' | 'whale_holders';
+
+export async function getCollectionWhales(
+  blockchain: string = 'ethereum',
+  time_range: string = '24h',
+  contract_address?: string[],
+  sort_by: CollectionWhalesSortBy = 'nft_count'
+): Promise<any> {
+  // Validate blockchain parameter
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_by,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  // Add contract addresses if provided
+  if (contract_address && contract_address.length > 0) {
+    params.contract_address = contract_address;
+  }
+  
+  return fetchFromEndpoint('/nft/collection/whales', params);
+}
+
+// Collection Metadata endpoint
+export async function getCollectionMetadata(
+  blockchain: string = 'ethereum',
+  contract_address?: string[],
+  slug_name?: string[],
+  time_range: string = 'all'
+): Promise<any> {
+  // Validate blockchain parameter
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  // Add contract addresses if provided
+  if (contract_address && contract_address.length > 0) {
+    params.contract_address = contract_address;
+  }
+  
+  // Add slug names if provided
+  if (slug_name && slug_name.length > 0) {
+    params.slug_name = slug_name;
+  }
+  
+  return fetchFromEndpoint('/nft/collection/metadata', params);
+}
+
+// NFT Floor Price endpoint
+export async function getNftFloorPrice(
+  blockchain: string = 'ethereum',
+  time_range: string = 'all',
+  contract_address?: string[],
+  marketplace_name?: string[],
+  collection_name?: string[],
+  sort_by: string = 'floor_price_usd'
+): Promise<any> {
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_by,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  if (contract_address && contract_address.length > 0) {
+    params.contract_address = contract_address;
+  }
+  
+  if (marketplace_name && marketplace_name.length > 0) {
+    params.marketplace_name = marketplace_name;
+  }
+  
+  if (collection_name && collection_name.length > 0) {
+    params.collection_name = collection_name;
+  }
+  
+  return fetchFromEndpoint('/nft/floor_price', params);
+}
+
+// NFT Analytics endpoint (specific NFT analysis)
+export async function getNftAnalytics(
+  contract_address: string[],
+  blockchain: string = 'ethereum',
+  time_range: string = '24h',
+  token_id?: string[],
+  sort_by: string = 'sales'
+): Promise<any> {
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    contract_address,
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_by,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  if (token_id && token_id.length > 0) {
+    params.token_id = token_id;
+  }
+  
+  return fetchFromEndpoint('/nft/analytics', params);
+}
+
+// NFT Listing endpoint
+export async function getNftListing(
+  blockchain: string = 'ethereum',
+  time_range: string = '24h',
+  contract_address?: string[],
+  token_id?: string[],
+  wallet?: string[],
+  marketplace?: string[],
+  sort_by: string = 'listing_timestamp'
+): Promise<any> {
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_by,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  if (contract_address && contract_address.length > 0) {
+    params.contract_address = contract_address;
+  }
+  
+  if (token_id && token_id.length > 0) {
+    params.token_id = token_id;
+  }
+  
+  if (wallet && wallet.length > 0) {
+    params.wallet = wallet;
+  }
+  
+  if (marketplace && marketplace.length > 0) {
+    params.marketplace = marketplace;
+  }
+  
+  return fetchFromEndpoint('/nft/listing', params);
+}
+
+// Token Balance endpoint
+export async function getTokenBalance(
+  blockchain?: string[],
+  token_address?: string[],
+  address?: string[]
+): Promise<any> {
+  const params: Record<string, any> = {
+    offset: 0,
+    limit: 30
+  };
+  
+  if (blockchain && blockchain.length > 0) {
+    params.blockchain = blockchain;
+  }
+  
+  if (token_address && token_address.length > 0) {
+    params.token_address = token_address;
+  }
+  
+  if (address && address.length > 0) {
+    params.address = address;
+  }
+  
+  return fetchFromEndpoint('/token/balance', params);
+}
+
+// NFT Marketplace Metadata endpoint
+export async function getNftMarketplaceMetadata(
+  sort_order: string = 'desc'
+): Promise<any> {
+  const params: Record<string, any> = {
+    sort_order,
+    offset: 0,
+    limit: 30
+  };
+  
+  return fetchFromEndpoint('/nft/marketplace/metadata', params);
+}
+
+// NFT Marketplace Analytics endpoint
+export async function getNftMarketplaceAnalytics(
+  blockchain: string = 'ethereum',
+  time_range: string = '24h',
+  sort_by: string = 'volume',
+  name?: string[]
+): Promise<any> {
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_by,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  if (name && name.length > 0) {
+    params.name = name;
+  }
+  
+  return fetchFromEndpoint('/nft/marketplace/analytics', params);
+}
+
+// NFT Marketplace Washtrade endpoint
+export async function getNftMarketplaceWashtrade(
+  blockchain: string = 'ethereum',
+  time_range: string = '24h',
+  sort_by: string = 'washtrade_volume',
+  name?: string[]
+): Promise<any> {
+  const supportedBlockchains = [
+    'avalanche', 'binance', 'bitcoin', 'ethereum', 'linea', 'polygon', 
+    'root', 'solana', 'soneium', 'unichain', 'unichain_sepolia'
+  ];
+  
+  if (!supportedBlockchains.includes(blockchain.toLowerCase())) {
+    throw new Error(`Please specify a valid blockchain from: ${supportedBlockchains.join(', ')}.`);
+  }
+  
+  const params: Record<string, any> = {
+    blockchain: blockchain.toLowerCase(),
+    time_range,
+    sort_by,
+    sort_order: 'desc',
+    offset: 0,
+    limit: 30
+  };
+  
+  if (name && name.length > 0) {
+    params.name = name;
+  }
+  
+  return fetchFromEndpoint('/nft/marketplace/washtrade', params);
+}
+

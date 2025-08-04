@@ -232,3 +232,122 @@ export interface MarketChartData {
     color: string;
   }[];
 }
+
+// Collection Whales API Parameters
+export interface CollectionWhalesParams {
+  blockchain?: string;
+  contract_address?: string[];
+  time_range?: string;
+  offset?: number;
+  limit?: number;
+  sort_by?: CollectionWhalesSortBy;
+  sort_order?: 'asc' | 'desc';
+}
+
+// Collection Whales Sort Options
+export type CollectionWhalesSortBy = 
+  | 'nft_count' | 'mint_count' | 'mint_volume' | 'mint_whales'
+  | 'unique_wallets' | 'unique_mint_wallets' | 'unique_buy_wallets' | 'unique_sell_wallets'
+  | 'total_mint_volume' | 'total_sale_volume' | 'buy_count' | 'buy_volume' | 'buy_whales'
+  | 'sell_count' | 'sell_volume' | 'sell_whales' | 'whale_holders';
+
+// Collection Whales Response Types
+export interface CollectionWhalesData {
+  blockchain: string;
+  buy_count: string;
+  buy_volume: number;
+  buy_whales: string;
+  chain_id: number;
+  collection: string;
+  contract_address: string;
+  contract_type: string;
+  mint_count: string;
+  mint_volume: number;
+  mint_whales: string;
+  nft_count: string;
+  sell_count: string;
+  sell_volume: number;
+  sell_whales: string;
+  total_mint_volume: number;
+  total_sale_volume: number;
+  unique_buy_wallets: string;
+  unique_mint_wallets: string;
+  unique_sell_wallets: string;
+  unique_wallets: string;
+  whale_holders: string;
+}
+
+// NFT Washtrade API Parameters (for specific NFT analysis)
+export interface NFTWashtradeParams {
+  contract_address?: string[];
+  token_id?: string[];
+  blockchain?: string;
+  time_range?: string;
+  offset?: number;
+  limit?: number;
+  sort_by?: NFTWashtradeSortBy;
+  sort_order?: 'asc' | 'desc';
+}
+
+// NFT Washtrade Sort Options
+export type NFTWashtradeSortBy = 
+  | 'washtrade_volume' | 'washtrade_suspect_sales' | 'washtrade_assets' | 'washtrade_wallets'
+  | 'washtrade_volume_change' | 'washtrade_suspect_sales_change' | 'washtrade_assets_change' 
+  | 'washtrade_wallets_change' | 'washtrade_suspect_transactions' | 'washtrade_suspect_transactions_change';
+
+// NFT Washtrade Response Types
+export interface NFTWashtradeData {
+  blockchain: string;
+  chain_id: number;
+  contract_address: string;
+  token_id: string;
+  washtrade_assets: string;
+  washtrade_assets_change: number;
+  washtrade_suspect_sales: string;
+  washtrade_suspect_sales_change: number;
+  washtrade_suspect_transactions: string;
+  washtrade_suspect_transactions_change: number;
+  washtrade_volume: number;
+  washtrade_volume_change: number;
+  washtrade_wallets: string;
+  washtrade_wallets_change: number;
+}
+
+// Collection Metadata API Parameters
+export interface CollectionMetadataParams {
+  blockchain?: string;
+  contract_address?: string[];
+  slug_name?: string[];
+  time_range?: string;
+  offset?: number;
+  limit?: number;
+  sort_order?: 'asc' | 'desc';
+}
+
+// Collection Metadata Response Types
+export interface CollectionMetadataData {
+  banner_image_url: string;
+  blockchain: string;
+  brand: string;
+  category: string;
+  chain_id: number;
+  close_colours: string;
+  collection: string;
+  collection_id: number;
+  contract_address: string;
+  contract_created_date: string;
+  contract_type: string;
+  description: string;
+  discord_url: string | null;
+  distinct_nft_count: number;
+  end_token_id: string;
+  external_url: string;
+  image_url: string;
+  instagram_url: string | null;
+  marketplaces: string;
+  medium_url: string | null;
+  slug_name: string;
+  start_token_id: string;
+  telegram_url: string | null;
+  top_contracts: string[];
+}

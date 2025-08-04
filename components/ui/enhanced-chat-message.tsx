@@ -5,8 +5,9 @@ import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChatMessage as ChatMessageType } from '@/lib/chat-storage';
-import { MarketChartData } from '@/lib/types';
+import { MarketChartData, TableData } from '@/lib/types';
 import { MarketAlphaChart } from '@/components/ui/market-alpha-chart';
+import { CollectionTable } from '@/components/ui/collection-table';
 import Image from 'next/image';
 
 // Format message content for clean display
@@ -23,13 +24,15 @@ interface EnhancedChatMessageProps {
   agentType: 'copilot' | 'market-insights';
   className?: string;
   chartData?: MarketChartData;
+  tableData?: TableData;
 }
 
 export function EnhancedChatMessage({ 
   message, 
   agentType, 
   className, 
-  chartData 
+  chartData,
+  tableData 
 }: EnhancedChatMessageProps) {
   const [copied, setCopied] = useState(false);
 
@@ -114,6 +117,13 @@ export function EnhancedChatMessage({
               title="Market Alpha Trends" 
               description="Real-time NFT market data visualization"
             />
+          </div>
+        )}
+        
+        {/* Table Data - Full width */}
+        {tableData && (
+          <div className="mt-4 w-full">
+            <CollectionTable data={tableData} />
           </div>
         )}
         

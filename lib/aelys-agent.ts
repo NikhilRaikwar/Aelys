@@ -10,7 +10,16 @@ import {
   getNftWalletAnalytics,
   getNftWalletScores,
   getNftWalletTraders,
-  getNftWalletWashtrade
+  getNftWalletWashtrade,
+  getNFTWashtrade,
+  getCollectionMetadata,
+  getNftFloorPrice,
+  getNftAnalytics,
+  getNftListing,
+  getTokenBalance,
+  getNftMarketplaceMetadata,
+  getNftMarketplaceAnalytics,
+  getNftMarketplaceWashtrade
 } from './aelys-agent-api';
 import {
   AgentResponse,
@@ -66,6 +75,125 @@ function isWashtradeQuery(query: string): boolean {
   );
 }
 
+// Helper function to detect NFT-specific washtrade queries (for specific contract/token analysis)
+function isNFTWashtradeQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  const hasWashtradeTerms = lowerQuery.includes('wash') || lowerQuery.includes('washtrade') || 
+                           lowerQuery.includes('fraud') || lowerQuery.includes('suspicious');
+  const hasNFTSpecificTerms = lowerQuery.includes('token') || lowerQuery.includes('contract') ||
+                             lowerQuery.includes('nft') || /0x[a-fA-F0-9]{40}/.test(query);
+  
+  return hasWashtradeTerms && hasNFTSpecificTerms;
+}
+
+// Helper function to extract contract address from query
+function extractContractAddress(query: string): string[] | null {
+  const addresses = query.match(/0x[a-fA-F0-9]{40}/g);
+  return addresses ? addresses : null;
+}
+
+// Helper function to extract token ID from query
+function extractTokenId(query: string): string[] | null {
+  // Look for token ID patterns like "token 123", "#123", "token id 456"
+  const tokenIdMatches = query.match(/(?:token\s*(?:id\s*)?|#)(\d+)/gi);
+  if (tokenIdMatches) {
+    return tokenIdMatches.map(match => match.replace(/(?:token\s*(?:id\s*)?|#)/i, '').trim());
+  }
+  return null;
+}
+
+// Helper function to detect collection metadata queries
+function isCollectionMetadataQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  
+  // Priority check: Look for "tell me about" + "collection" + quoted name pattern
+  if ((lowerQuery.includes('tell me about') || lowerQuery.includes('about')) && 
+      lowerQuery.includes('collection') && 
+      (lowerQuery.includes("'") || lowerQuery.includes('"'))) {
+    console.log('Collection metadata query detected: tell me about collection pattern with quotes');
+    return true;
+  }
+  
+  // Check for any quoted NFT collection name patterns
+  if ((lowerQuery.includes("'") || lowerQuery.includes('"')) && 
+      (lowerQuery.includes('collection') || lowerQuery.includes('nft') || 
+       lowerQuery.includes('tell me about') || lowerQuery.includes('about'))) {
+    console.log('Collection metadata query detected: quoted collection name pattern');
+    return true;
+  }
+  
+  const metadataKeywords = [
+    'collection info', 'collection details', 'collection metadata', 'about collection',
+    'collection description', 'collection information', 'what is this collection',
+    'tell me about collection', 'collection data', 'collection properties',
+    'collection attributes', 'collection characteristics', 'nft collection info'
+  ];
+  
+  // Check for explicit metadata keywords
+  if (metadataKeywords.some(keyword => lowerQuery.includes(keyword))) {
+    console.log('Collection metadata query detected: metadata keywords');
+    return true;
+  }
+  
+  // Check for collection + descriptive words
+  if (lowerQuery.includes('collection') && (
+    lowerQuery.includes('info') || lowerQuery.includes('details') ||
+    lowerQuery.includes('metadata') || lowerQuery.includes('description') ||
+    lowerQuery.includes('about') || lowerQuery.includes('what is') ||
+    lowerQuery.includes('tell me')
+  )) {
+    console.log('Collection metadata query detected: collection + descriptive words');
+    return true;
+  }
+  
+  // Check for contract address with collection context
+  if (/0x[a-fA-F0-9]{40}/.test(query) && 
+      (lowerQuery.includes('collection') || lowerQuery.includes('metadata') || 
+       lowerQuery.includes('info') || lowerQuery.includes('about'))) {
+    console.log('Collection metadata query detected: contract address with collection context');
+    return true;
+  }
+  
+  // Check for slug patterns like "collection:name" or contract addresses with collection context
+  if ((lowerQuery.includes('collection:') || lowerQuery.includes('slug:')) && 
+      lowerQuery.includes('details')) {
+    console.log('Collection metadata query detected: slug patterns');
+    return true;
+  }
+  
+  console.log('Collection metadata query NOT detected for:', lowerQuery);
+  return false;
+}
+
+// Helper function to extract slug name from query
+function extractSlugName(query: string): string[] | null {
+  // Look for slug patterns like "collection:slug-name" or "slug:name"
+  const slugMatches = query.match(/(?:collection:|slug:)([a-zA-Z0-9-_]+)/gi);
+  if (slugMatches) {
+    return slugMatches.map(match => match.replace(/(?:collection:|slug:)/i, '').trim());
+  }
+  
+  // Look for quoted collection names with single quotes
+  const singleQuotedMatches = query.match(/'([^']+)'/g);
+  if (singleQuotedMatches) {
+    return singleQuotedMatches.map(match => match.replace(/'/g, '').toLowerCase().replace(/\s+/g, '-'));
+  }
+  
+  // Look for quoted collection names with double quotes
+  const doubleQuotedMatches = query.match(/"([^"]+)"/g);
+  if (doubleQuotedMatches) {
+    return doubleQuotedMatches.map(match => match.replace(/"/g, '').toLowerCase().replace(/\s+/g, '-'));
+  }
+  
+  // Look for collection names after "collection" keyword (without quotes)
+  const collectionNameMatch = query.match(/(?:collection\s+|about\s+(?:the\s+)?collection\s+)([a-zA-Z0-9-_]+)/i);
+  if (collectionNameMatch) {
+    return [collectionNameMatch[1].toLowerCase()];
+  }
+  
+  return null;
+}
+
 // Helper function to detect if a query is asking for market-level data (not wallet-specific)
 function isMarketLevelQuery(query: string): boolean {
   const lowerQuery = query.toLowerCase();
@@ -104,6 +232,30 @@ function isMarketLevelQuery(query: string): boolean {
   return !lowerQuery.includes('my ') && !lowerQuery.includes('wallet');
 }
 
+// Helper function to detect whale queries (for routing to market-alpha-copilot)
+function isWhaleQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  const whaleKeywords = [
+    'collection whales', 'whale activity', 'whale metrics', 'whale holders',
+    'whale trading', 'whale volume', 'whale analysis', 'collections with whales',
+    'which collections have whales', 'whale buyers', 'whale sellers',
+    'collections ranked by whale', 'collections sorted by whale',
+    'mint whales', 'trading whales', 'collections with most whales'
+  ];
+  
+  // Check for whale-specific patterns
+  const hasWhaleKeyword = whaleKeywords.some(keyword => lowerQuery.includes(keyword));
+  const hasWhaleAndCollection = lowerQuery.includes('whale') && 
+    (lowerQuery.includes('collection') || lowerQuery.includes('collections'));
+  const hasWhaleMarketQuery = lowerQuery.includes('whale') && 
+    (lowerQuery.includes('ethereum') || lowerQuery.includes('polygon') || 
+     lowerQuery.includes('solana') || lowerQuery.includes('binance') ||
+     lowerQuery.includes('avalanche') || lowerQuery.includes('show me') ||
+     lowerQuery.includes('which') || lowerQuery.includes('display'));
+  
+  return hasWhaleKeyword || hasWhaleAndCollection || hasWhaleMarketQuery;
+}
+
 // Helper function to detect market insight queries (for routing to market-alpha-copilot)
 function isMarketInsightQuery(query: string): boolean {
   const lowerQuery = query.toLowerCase();
@@ -113,6 +265,11 @@ function isMarketInsightQuery(query: string): boolean {
     'nft market', 'defi market', 'market overview', 'market summary',
     'holder analytics', 'trader analytics', 'market scores', 'market sentiment'
   ];
+  
+  // Include whale queries in market insights
+  if (isWhaleQuery(query)) {
+    return true;
+  }
   
   return marketInsightKeywords.some(keyword => lowerQuery.includes(keyword)) ||
          (isMarketLevelQuery(query) && (
@@ -160,6 +317,16 @@ function detectSortByPreference(query: string, endpointType: string): string {
   
   // NFT Washtrade sort preferences
   if (endpointType === 'nft_washtrade') {
+    if (lowerQuery.includes('suspect') || lowerQuery.includes('suspicious')) return 'washtrade_suspect_sales';
+    if (lowerQuery.includes('change') || lowerQuery.includes('trend')) return 'washtrade_volume_change';
+    return 'washtrade_volume'; // default
+  }
+  
+  // NFT-specific Washtrade sort preferences (for specific NFT analysis)
+  if (endpointType === 'nft_specific_washtrade') {
+    if (lowerQuery.includes('assets')) return 'washtrade_assets';
+    if (lowerQuery.includes('wallets')) return 'washtrade_wallets';
+    if (lowerQuery.includes('transactions')) return 'washtrade_suspect_transactions';
     if (lowerQuery.includes('suspect') || lowerQuery.includes('suspicious')) return 'washtrade_suspect_sales';
     if (lowerQuery.includes('change') || lowerQuery.includes('trend')) return 'washtrade_volume_change';
     return 'washtrade_volume'; // default
@@ -291,6 +458,58 @@ function isDetailedQuery(query: string): boolean {
   );
 }
 
+// Helper function to detect floor price queries
+function isFloorPriceQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  return (
+    lowerQuery.includes('floor price') || lowerQuery.includes('floor') ||
+    lowerQuery.includes('minimum price') || lowerQuery.includes('cheapest') ||
+    lowerQuery.includes('lowest price')
+  );
+}
+
+// Helper function to detect NFT analytics queries (specific NFT analysis)
+function isNftAnalyticsQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  const hasNftTerms = lowerQuery.includes('nft') || /0x[a-fA-F0-9]{40}/.test(query);
+  const hasAnalyticsTerms = lowerQuery.includes('analytics') || lowerQuery.includes('performance') ||
+                           lowerQuery.includes('sales') || lowerQuery.includes('volume') ||
+                           lowerQuery.includes('transactions');
+  
+  return hasNftTerms && hasAnalyticsTerms;
+}
+
+// Helper function to detect NFT listing queries
+function isNftListingQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  return (
+    lowerQuery.includes('listing') || lowerQuery.includes('listed') ||
+    lowerQuery.includes('for sale') || lowerQuery.includes('on sale') ||
+    lowerQuery.includes('marketplace listing')
+  );
+}
+
+// Helper function to detect token balance queries
+function isTokenBalanceQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  return (
+    lowerQuery.includes('token balance') || lowerQuery.includes('token holdings') ||
+    lowerQuery.includes('erc20') || lowerQuery.includes('token portfolio') ||
+    (lowerQuery.includes('token') && (lowerQuery.includes('balance') || lowerQuery.includes('hold')))
+  );
+}
+
+// Helper function to detect marketplace queries
+function isMarketplaceQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  return (
+    lowerQuery.includes('marketplace') || lowerQuery.includes('opensea') ||
+    lowerQuery.includes('blur') || lowerQuery.includes('magiceden') ||
+    lowerQuery.includes('rarible') || lowerQuery.includes('marketplace analytics') ||
+    lowerQuery.includes('marketplace data') || lowerQuery.includes('marketplace metadata')
+  );
+}
+
 export async function askAelysCopilot(
   userQuery: string,
   walletAddress: string = '',
@@ -299,6 +518,19 @@ export async function askAelysCopilot(
   const startTime = Date.now();
 
   try {
+    console.log('=== QUERY PROCESSING DEBUG ===');
+    console.log('User Query:', userQuery);
+    console.log('Is Collection Metadata Query:', isCollectionMetadataQuery(userQuery));
+    console.log('Is General Query:', isGeneralQuery(userQuery));
+    console.log('Is Washtrade Query:', isWashtradeQuery(userQuery));
+    console.log('Is Wallet Metrics Query:', isWalletMetricsQuery(userQuery));
+    console.log('Is Floor Price Query:', isFloorPriceQuery(userQuery));
+    console.log('Is NFT Analytics Query:', isNftAnalyticsQuery(userQuery));
+    console.log('Is NFT Listing Query:', isNftListingQuery(userQuery));
+    console.log('Is Token Balance Query:', isTokenBalanceQuery(userQuery));
+    console.log('Is Marketplace Query:', isMarketplaceQuery(userQuery));
+    console.log('==============================');
+    
     // Check if this is a wallet metrics query that might have an address in the query
     if (isWalletMetricsQuery(userQuery)) {
       const queryWalletAddress = extractWalletAddress(userQuery);
@@ -538,6 +770,247 @@ Provide a natural language summary focusing on key washtrade metrics for this sp
       }
     }
     
+    // Check if this is a collection metadata query
+    if (isCollectionMetadataQuery(userQuery)) {
+      console.log('Collection metadata query detected:', userQuery);
+      const contractAddress = extractContractAddress(userQuery);
+      const slugName = extractSlugName(userQuery);
+      const blockchain = extractBlockchain(userQuery);
+      
+      console.log('Extracted parameters:', {
+        contractAddress,
+        slugName,
+        blockchain
+      });
+
+      // Check if any identifying parameters were found
+      if (!contractAddress && !slugName) {
+        console.log('No contract address or slug name found');
+        return {
+          answer: "I need a contract address or slug name to fetch the collection metadata. Please provide one in your query.",
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+      
+      try {
+        console.log('Calling getCollectionMetadata with:', { blockchain, contractAddress, slugName });
+        const apiResult = await getCollectionMetadata(blockchain, contractAddress, slugName);
+        console.log('API result:', apiResult);
+
+        // Generate a conversational response about the collection
+        const analysisPrompt = `Analyze the following NFT collection metadata and provide a brief, conversational summary:
+
+User Query: "${userQuery}"
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+
+Collection Metadata: ${JSON.stringify(apiResult, null, 2)}
+
+Provide a natural language summary about the collection including:
+- Collection name and description
+- Key characteristics
+- Blockchain information
+- Contract addresses (if available)
+- Any notable features
+
+Keep the response conversational and informative, like explaining to someone who asked about this specific collection.`;
+        
+        const analysisResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are an NFT expert. Provide clear, conversational explanations about NFT collections. Keep responses informative but concise, around 100-150 words. Be friendly and helpful.' },
+            { role: 'user', content: analysisPrompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 400,
+        });
+        
+        const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch the collection metadata but encountered issues analyzing it.';
+        
+        return {
+          answer: finalAnswer,
+          metadata: {
+            tokensUsed: analysisResponse.usage?.total_tokens || 0,
+            executionTime: Date.now() - startTime,
+          },
+        };
+      } catch (error) {
+        console.error('Collection metadata API error:', error);
+        if (error.response) {
+          return {
+            answer: error.response.data?.message || 'An API error occurred while fetching the collection metadata.',
+            metadata: {
+              executionTime: Date.now() - startTime,
+            },
+          };
+        }
+        return {
+          answer: 'I encountered an error fetching the collection metadata. Please try again later.',
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+    }
+
+    // Check if this is a floor price query
+    if (isFloorPriceQuery(userQuery)) {
+      const contractAddress = extractContractAddress(userQuery);
+      const blockchain = extractBlockchain(userQuery);
+      
+      try {
+        const apiResult = await getNftFloorPrice(blockchain, 'all', contractAddress);
+        
+        const analysisPrompt = `Analyze the following floor price data and provide a brief summary:
+
+User Query: "${userQuery}"
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+
+Floor Price Data: ${JSON.stringify(apiResult, null, 2)}
+
+Provide a conversational summary of the floor prices, including collection names, prices in USD and native currency, and marketplaces. Keep it brief and informative.`;
+        
+        const analysisResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are an NFT market analyst. Provide brief, clear summaries of floor price data. Keep responses under 100 words. Focus on key price insights.' },
+            { role: 'user', content: analysisPrompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 300,
+        });
+        
+        const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch floor price data but encountered issues analyzing it.';
+        
+        return {
+          answer: finalAnswer,
+          metadata: {
+            tokensUsed: analysisResponse.usage?.total_tokens || 0,
+            executionTime: Date.now() - startTime,
+          },
+        };
+      } catch (error) {
+        console.error('Floor price API error:', error);
+        return {
+          answer: `I encountered an error fetching floor price data for ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}. Please try again later.`,
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+    }
+    
+    // Check if this is an NFT analytics query
+    if (isNftAnalyticsQuery(userQuery)) {
+      const contractAddress = extractContractAddress(userQuery);
+      const tokenId = extractTokenId(userQuery);
+      const blockchain = extractBlockchain(userQuery);
+      
+      if (!contractAddress) {
+        return {
+          answer: "I need a contract address to fetch NFT analytics. Please provide one in your query.",
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+      
+      try {
+        const apiResult = await getNftAnalytics(contractAddress, blockchain, '24h', tokenId);
+        
+        const analysisPrompt = `Analyze the following NFT analytics data and provide a brief summary:
+
+User Query: "${userQuery}"
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+
+NFT Analytics Data: ${JSON.stringify(apiResult, null, 2)}
+
+Provide a conversational summary focusing on key performance metrics like sales, volume, transactions, and trends. Keep it brief and informative.`;
+        
+        const analysisResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are an NFT analyst. Provide brief, clear summaries of NFT performance data. Keep responses under 100 words. Focus on key metrics and trends.' },
+            { role: 'user', content: analysisPrompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 300,
+        });
+        
+        const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch NFT analytics data but encountered issues analyzing it.';
+        
+        return {
+          answer: finalAnswer,
+          metadata: {
+            tokensUsed: analysisResponse.usage?.total_tokens || 0,
+            executionTime: Date.now() - startTime,
+          },
+        };
+      } catch (error) {
+        console.error('NFT analytics API error:', error);
+        return {
+          answer: `I encountered an error fetching NFT analytics data for ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}. Please try again later.`,
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+    }
+    
+    // Check if this is a marketplace query
+    if (isMarketplaceQuery(userQuery)) {
+      const blockchain = extractBlockchain(userQuery);
+      
+      try {
+        let apiResult;
+        if (userQuery.toLowerCase().includes('washtrade') || userQuery.toLowerCase().includes('wash')) {
+          apiResult = await getNftMarketplaceWashtrade(blockchain, '24h');
+        } else if (userQuery.toLowerCase().includes('metadata')) {
+          apiResult = await getNftMarketplaceMetadata();
+        } else {
+          apiResult = await getNftMarketplaceAnalytics(blockchain, '24h');
+        }
+        
+        const analysisPrompt = `Analyze the following marketplace data and provide a brief summary:
+
+User Query: "${userQuery}"
+Blockchain: ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}
+
+Marketplace Data: ${JSON.stringify(apiResult, null, 2)}
+
+Provide a conversational summary of the marketplace insights, focusing on key metrics like volume, sales, and marketplace performance. Keep it brief and informative.`;
+        
+        const analysisResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are a marketplace analyst. Provide brief, clear summaries of marketplace data. Keep responses under 100 words. Focus on key marketplace insights.' },
+            { role: 'user', content: analysisPrompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 300,
+        });
+        
+        const finalAnswer = analysisResponse.choices[0]?.message?.content || 'I was able to fetch marketplace data but encountered issues analyzing it.';
+        
+        return {
+          answer: finalAnswer,
+          metadata: {
+            tokensUsed: analysisResponse.usage?.total_tokens || 0,
+            executionTime: Date.now() - startTime,
+          },
+        };
+      } catch (error) {
+        console.error('Marketplace API error:', error);
+        return {
+          answer: `I encountered an error fetching marketplace data for ${blockchain.charAt(0).toUpperCase() + blockchain.slice(1)}. Please try again later.`,
+          metadata: {
+            executionTime: Date.now() - startTime,
+          },
+        };
+      }
+    }
+
     // Check if this is a general/educational query
     if (isGeneralQuery(userQuery)) {
       const generalSystemPrompt = `You are Aelys Copilot, an expert in NFTs, cryptocurrency, DeFi, Web3, and blockchain technology. Provide clear, educational, and conversational answers to general questions about crypto onboarding, wallet security, NFT concepts, DeFi protocols, and Web3 fundamentals. Focus on being helpful and informative for users learning about these topics.`;

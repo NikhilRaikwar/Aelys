@@ -8,7 +8,7 @@ import { ChatMessage, LoadingMessage } from '@/components/ui/chat-message';
 import { EnhancedChatMessage } from '@/components/ui/enhanced-chat-message';
 import { StickyHeader, MobileStickyHeader } from '@/components/ui/sticky-header';
 import { chatStorage, ChatMessage as ChatMessageType } from '@/lib/chat-storage';
-import { MarketChartData } from '@/lib/types';
+import { MarketChartData, TableData } from '@/lib/types';
 import { ArrowUp, Bot, TrendingUp, Loader2 } from 'lucide-react';
 import Spline from '@splinetool/react-spline';
 import { SimpleBorderBeam } from '@/components/ui/simple-border-beam';
@@ -33,6 +33,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isChatStarted, setIsChatStarted] = useState(false);
   const [chartDataMap, setChartDataMap] = useState<Record<string, MarketChartData>>({});
+  const [tableDataMap, setTableDataMap] = useState<Record<string, TableData>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -136,6 +137,14 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         }));
       }
       
+      // Store table data if available (for collection metadata)
+      if (agentResponse.visualData) {
+        setTableDataMap(prev => ({
+          ...prev,
+          [newAgentMessage.id]: agentResponse.visualData
+        }));
+      }
+      
       setChatHistory(prev => [...prev, newAgentMessage]);
       
     } catch (error) {
@@ -207,6 +216,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
             <div className="max-w-4xl mx-auto space-y-6 chat-container">
               {chatHistory.map((entry) => {
                 const chartData = chartDataMap[entry.id];
+                const tableData = tableDataMap[entry.id];
                 // Use enhanced chat message for market insights with chart support
                 if (agentType === 'market-insights' && entry.role === 'assistant') {
                   return (
@@ -215,12 +225,18 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                       message={entry} 
                       agentType={agentType} 
                       chartData={chartData}
+                      tableData={tableData}
                     />
                   );
                 }
                 // Use regular chat message for copilot and user messages
                 return (
-                  <ChatMessage key={entry.id} message={entry} agentType={agentType} />
+                  <ChatMessage 
+                    key={entry.id} 
+                    message={entry} 
+                    agentType={agentType} 
+                    tableData={tableData}
+                  />
                 );
               })}
               {isLoading && (

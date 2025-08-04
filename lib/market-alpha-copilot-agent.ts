@@ -41,7 +41,7 @@ function isChartQuery(query: string): boolean {
 }
 
 // Helper function to call market insight endpoints
-async function callMarketInsightEndpoint(endpointName: string, params: MarketInsightParams) {
+async function callMarketInsightEndpoint(endpointName: string, params: any) {
   switch (endpointName) {
     case 'analytics':
       return api.getMarketAnalytics(params);
@@ -53,6 +53,20 @@ async function callMarketInsightEndpoint(endpointName: string, params: MarketIns
       return api.getTradersInsights(params);
     case 'washtrade':
       return api.getMarketWashtrade(params);
+    case 'collection_whales':
+      return api.getCollectionWhales(params);
+    case 'floor_price':
+      return api.getNFTFloorPrice(params);
+    case 'nft_analytics':
+      return api.getNFTAnalytics(params);
+    case 'nft_listings':
+      return api.getNFTListings(params);
+    case 'token_balance':
+      return api.getTokenBalance(params);
+    case 'marketplace_metadata':
+      return api.getMarketplaceMetadata(params);
+    case 'marketplace_analytics':
+      return api.getMarketplaceAnalytics(params);
     default:
       throw new Error(`Unknown market insight endpoint: ${endpointName}`);
   }
@@ -233,6 +247,12 @@ Available Market Insight API functions:
    - Default: blockchain="ethereum", time_range="24h"
    - Returns: Wash trade metrics, suspect sales/transactions, washtrade volume with trend arrays for charting
 
+6. collection_whales: Collection whale metrics - PROVIDES TABLE DATA
+   - Parameters: { blockchain?: string, time_range?: string, contract_address?: string[], sort_by?: string }
+   - Default: blockchain="ethereum", time_range="24h", sort_by="nft_count"
+   - Returns: Whale activity metrics for NFT collections including whale count, whale activities, and activity trends
+   - Sort options: nft_count, mint_count, mint_volume, mint_whales, unique_wallets, unique_mint_wallets, unique_buy_wallets, unique_sell_wallets, total_mint_volume, total_sale_volume, buy_count, buy_volume, buy_whales, sell_count, sell_volume, sell_whales, whale_holders
+
 Supported blockchains: atleta_olympia, avalanche, base, berachain, binance, bitcoin, ethereum, full, linea, monad_testnet, polygon, polyhedra_testnet, root, solana, somnia_testnet, soneium, unichain, unichain_sepolia
 Supported time ranges: 15m, 30m, 24h, 7d, 30d, 90d, all
 
@@ -245,6 +265,7 @@ CRITICAL RESPONSE RULES:
 6. For scores/sentiment queries, use the 'scores' endpoint
 7. For washtrade queries, use the 'washtrade' endpoint
 8. For holder queries, use the 'holders' endpoint
+9. For whale/collection whale queries, use the 'collection_whales' endpoint
 
 When you need to make API calls, you MUST respond with this EXACT JSON format (NO markdown, NO explanatory text):
 {
