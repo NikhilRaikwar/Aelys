@@ -11,7 +11,7 @@
 
 ## 📖 Project Overview
 
-**Aelys Copilot** is a next-generation NFT and crypto analytics platform, designed as an AI-powered conversational assistant that delivers personalized portfolio and market intelligence. Leveraging **OpenAI’s large language models** and **bitsCrunch UnleashNFTs APIs (30 total endpoints)**, Aelys empowers NFT collectors, traders, and enthusiasts with seamless, real-time insights via an intuitive chat interface.
+**Aelys Copilot** is a next-generation NFT and crypto analytics platform, designed as an AI-powered conversational assistant that delivers personalized portfolio and market intelligence. Leveraging **OpenAI’s large language models** and **bitsCrunch UnleashNFTs APIs (26 total endpoints)**, Aelys empowers NFT collectors, traders, and enthusiasts with seamless, real-time insights via an intuitive chat interface.
 
 Built for clarity, speed, and depth, Aelys allows users to connect wallets securely and query a rich set of analytics—from wallet-level risk to macro NFT market trends—all powered by advanced AI reasoning and comprehensive blockchain data.
 
