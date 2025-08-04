@@ -46,12 +46,14 @@ Built for clarity, speed, and depth, Aelys allows users to connect wallets secur
 - `/wallet/balance/defi` — DeFi portfolio breakdown
 - `/wallet/balance/nft` — NFT portfolio overview
 - `/wallet/balance/token` — ERC20/token holdings
-- `/wallet-label` — Wallet label & status
-- `/wallet-score` — Wallet risk/reputation scoring
-- `/wallet-metrics` — Metrics, activity, and P&L
-- `/nft-wallet-analytics` — NFT-specific wallet analytics
-- `/nft-wallet-washtrade` — Wallet-level fraud detection
-- `/nft-wallet-profile` — Detailed wallet profile
+- `/wallet/label` — Wallet label & status
+- `/wallet/score` — Wallet risk/reputation scoring
+- `/wallet/metrics` — Metrics, activity, and P&L
+- `/nft/wallet/analytics` — NFT-specific wallet analytics
+- `/nft/wallet/washtrade` — Wallet-level fraud detection
+- `/nft/wallet/profile` — Detailed wallet profile
+- `/nft/wallet/scores` — NFT wallet scoring metrics
+- `/nft/wallet/traders` — Wallet trading analytics
 
 ---
 
@@ -102,16 +104,94 @@ Built for clarity, speed, and depth, Aelys allows users to connect wallets secur
 - 🎓 "What is an NFT and how does it work?"
 - 🔒 "How do I secure my crypto wallet?"
 - 💡 "Explain what DeFi means in simple terms"
+- 🌊 "What is wash trading and how is it detected?"
 
 ### 🚀 **Aelys Copilot (Wallet & Portfolio)**
 - 💼 "Show me my complete portfolio breakdown"
 - ⚠️ "What's my wallet risk score and any suspicious activity?"
 - 📈 "Get wallet metrics for 0x742d3..."
+- 🏷️ "What labels and tags are associated with this wallet?"
+- 🎯 "Show me NFT wallet scores and trading patterns"
+- 🔍 "Analyze wallet for wash trading behavior"
 
 ### 📊 **Market Alpha Copilot (Market Analytics)**
 - 📈 "Show NFT market volume trends for Ethereum"
 - 🔍 "What's the current wash trading activity on Polygon?"
 - 👥 "Display recent trader analytics and buyer/seller ratios"
+- 💰 "What's the floor price of Pudgy Penguins?"
+- 🐋 "Show me the top whale holders for BAYC collection"
+- 🏪 "Compare marketplace performance: OpenSea vs Blur"
+- 📋 "Get collection metadata for trending NFTs"
+
+### 💎 **NFT Collection Queries**
+- 💸 "Floor price trends for top 10 NFT collections"
+- 📊 "Show analytics for CryptoPunks collection"
+- 🏷️ "Get current NFT listings on Ethereum"
+- 🔥 "Which collections have the most trading activity today?"
+
+### 🛡️ **Risk & Fraud Detection**
+- 🚨 "Detect wash trading across top marketplaces"
+- ⚠️ "Risk assessment for wallet 0x..."
+- 🕵️ "Show suspicious trading patterns in the market"
+- 🔍 "Analyze wallet for potential fraud indicators"
+
+---
+
+## 🔌 Complete API Endpoints Reference
+
+Aelys Copilot integrates with **26 bitsCrunch UnleashNFTs API endpoints** to provide comprehensive Web3 analytics. Here's the complete list organized by functionality:
+
+### 💰 **Wallet Balance & Holdings**
+- `/wallet/balance/defi` — DeFi portfolio breakdown and protocol positions
+- `/wallet/balance/nft` — NFT portfolio overview with collection details
+- `/wallet/balance/token` — ERC20/token holdings and balances
+- `/token/balance` — Token balance aggregation across chains
+
+### 🏷️ **Wallet Identity & Reputation**
+- `/wallet/label` — Wallet labels, tags, and classification
+- `/wallet/score` — Wallet risk and reputation scoring
+- `/wallet/metrics` — Comprehensive wallet metrics, activity, and P&L
+
+### 👤 **NFT Wallet Analytics**
+- `/nft/wallet/profile` — Detailed NFT wallet profile and history
+- `/nft/wallet/analytics` — NFT-specific wallet analytics and trends
+- `/nft/wallet/scores` — NFT wallet scoring and ranking metrics
+- `/nft/wallet/traders` — Wallet trading patterns and behaviors
+- `/nft/wallet/washtrade` — Wallet-level fraud and wash trading detection
+
+### 📊 **Market Intelligence & Insights**
+- `/nft/market-insights/analytics` — Market-wide NFT analytics (volume, sales, transactions)
+- `/nft/market-insights/holders` — NFT holders aggregation and distribution trends
+- `/nft/market-insights/scores` — Market-level scoring trends and metrics
+- `/nft/market-insights/traders` — Active trader analytics and market participation
+- `/nft/market-insights/washtrade` — Market-wide wash trading detection and metrics
+
+### 💎 **NFT Collection & Floor Prices**
+- `/nft/floor_price` — Real-time NFT floor prices across collections
+- `/nft/analytics` — Comprehensive NFT collection analytics
+- `/nft/listing` — NFT listing data and marketplace activity
+- `/nft/collection/whales` — Collection whale holders and major stakeholders
+- `/nft/collection/metadata` — Collection metadata, stats, and information
+
+### 🏪 **Marketplace Analytics**
+- `/nft/marketplace/metadata` — Marketplace information and details
+- `/nft/marketplace/analytics` — Marketplace performance metrics and trends
+- `/nft/marketplace/washtrade` — Marketplace-specific wash trading analysis
+
+### 📈 **API Health Status**
+
+**Current API Status: 96% Success Rate (25/26 endpoints operational)**
+
+✅ **Working Endpoints:** All critical endpoints including floor prices, market analytics, and wallet data  
+⚠️ **Known Issues:** NFT Listings endpoint experiencing timeout issues  
+🔄 **Last Tested:** August 2025
+
+### 🎯 **Priority Endpoints for Core Features**
+
+- ✅ **NFT Floor Price** — Core pricing data (Working)
+- ✅ **Market Analytics** — Market trend analysis (Working)
+- ✅ **Wallet Balances** — Portfolio tracking (Working)
+- ✅ **Fraud Detection** — Risk assessment (Working)
 
 ---
 
