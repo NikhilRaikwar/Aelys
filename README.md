@@ -11,7 +11,7 @@
 
 ## 📖 Project Overview
 
-**Aelys Copilot** is a next-generation NFT and crypto analytics platform, designed as an AI-powered conversational assistant that delivers personalized portfolio and market intelligence. Leveraging OpenAI’s large language models and bitsCrunch UnleashNFTs APIs, Aelys empowers NFT collectors, traders, and enthusiasts with seamless, real-time insights via an intuitive chat interface.
+**Aelys Copilot** is a next-generation NFT and crypto analytics platform, designed as an AI-powered conversational assistant that delivers personalized portfolio and market intelligence. Leveraging **OpenAI’s large language models** and **bitsCrunch UnleashNFTs APIs (30 total endpoints)**, Aelys empowers NFT collectors, traders, and enthusiasts with seamless, real-time insights via an intuitive chat interface.
 
 Built for clarity, speed, and depth, Aelys allows users to connect wallets securely and query a rich set of analytics—from wallet-level risk to macro NFT market trends—all powered by advanced AI reasoning and comprehensive blockchain data.
 
@@ -54,6 +54,16 @@ Built for clarity, speed, and depth, Aelys allows users to connect wallets secur
 - `/nft/wallet/profile` — Detailed wallet profile
 - `/nft/wallet/scores` — NFT wallet scoring metrics
 - `/nft/wallet/traders` — Wallet trading analytics
+- `/nfts`: Fetch NFT data for a specific wallet.
+- `/wallet/analytics`: Fetch wallet analytics including portfolio value and collection breakdown.
+- `/collections/stats`: Fetch market data for specific NFT collections.
+- `/nft/collection/whales`: Get insights into whale metrics for NFT collections.
+- `/nft/floor-price`: Get floor price data for NFT collections.
+- `/nft/analytics`: Get detailed analytics for NFT collections.
+- `/nft/listings`: Get current listings for NFT collections.
+- `/wallet/token-balance`: Get token balance for a wallet address.
+- `/marketplace/metadata`: Get metadata for marketplaces.
+- `/marketplace/analytics`: Get analytics data for marketplaces.
 
 ---
 
