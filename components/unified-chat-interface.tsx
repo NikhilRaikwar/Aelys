@@ -34,6 +34,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
   const [isChatStarted, setIsChatStarted] = useState(false);
   const [chartDataMap, setChartDataMap] = useState<Record<string, MarketChartData>>({});
   const [tableDataMap, setTableDataMap] = useState<Record<string, TableData>>({});
+  const [userQueryMap, setUserQueryMap] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -145,6 +146,12 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         }));
       }
       
+      // Store user query for dynamic chart titles
+      setUserQueryMap(prev => ({
+        ...prev,
+        [newAgentMessage.id]: userMessage
+      }));
+      
       setChatHistory(prev => [...prev, newAgentMessage]);
       
     } catch (error) {
@@ -217,6 +224,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
               {chatHistory.map((entry) => {
                 const chartData = chartDataMap[entry.id];
                 const tableData = tableDataMap[entry.id];
+                const userQuery = userQueryMap[entry.id];
                 // Use enhanced chat message for market insights with chart support
                 if (agentType === 'market-insights' && entry.role === 'assistant') {
                   return (
@@ -226,6 +234,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                       agentType={agentType} 
                       chartData={chartData}
                       tableData={tableData}
+                      userQuery={userQuery}
                     />
                   );
                 }

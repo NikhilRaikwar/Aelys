@@ -19,12 +19,103 @@ const formatMessageContent = (content: string) => {
     .replace(/^[•*]\s/gm, '- ');
 };
 
+// Generate dynamic chart titles based on user query and chart data
+const generateChartTitle = (userQuery: string, chartData?: MarketChartData): { title: string; description: string } => {
+  if (!userQuery) {
+    return {
+      title: "Market Alpha Analytics",
+      description: "Real-time NFT market data visualization"
+    };
+  }
+
+  const query = userQuery.toLowerCase();
+  
+  // Extract blockchain if mentioned
+  const blockchains = {
+    'ethereum': 'Ethereum',
+    'solana': 'Solana', 
+    'polygon': 'Polygon',
+    'bitcoin': 'Bitcoin',
+    'avalanche': 'Avalanche',
+    'binance': 'Binance',
+    'base': 'Base',
+    'linea': 'Linea',
+    'root': 'Root'
+  };
+  const mentionedBlockchain = Object.keys(blockchains).find(chain => query.includes(chain));
+  const blockchainText = mentionedBlockchain ? blockchains[mentionedBlockchain as keyof typeof blockchains] : "";
+  
+  // Extract time range if mentioned
+  const timeRanges = ['15m', '30m', '24h', '7d', '30d', '90d', 'all'];
+  const mentionedTimeRange = timeRanges.find(range => query.includes(range));
+  const timeText = mentionedTimeRange ? ` (${mentionedTimeRange})` : "";
+  
+  // Generate title based on query intent
+  if (query.includes('wash') || query.includes('suspect') || query.includes('fraud')) {
+    return {
+      title: `${blockchainText} Wash Trading Analysis${timeText}`,
+      description: "Suspicious trading activity and manipulation detection"
+    };
+  }
+  
+  if (query.includes('trader') || query.includes('buyers') || query.includes('sellers')) {
+    return {
+      title: `${blockchainText} Trader Activity${timeText}`,
+      description: "Buyers, sellers, and trading participant metrics"
+    };
+  }
+  
+  if (query.includes('score') || query.includes('sentiment') || query.includes('fear') || query.includes('greed')) {
+    return {
+      title: `${blockchainText} Market Scores${timeText}`,
+      description: "Market sentiment and fear & greed indicators"
+    };
+  }
+  
+  if (query.includes('holder') || query.includes('ownership')) {
+    return {
+      title: `${blockchainText} Holder Insights${timeText}`,
+      description: "NFT holder behavior and ownership patterns"
+    };
+  }
+  
+  if (query.includes('volume') || query.includes('sales') || query.includes('transaction')) {
+    return {
+      title: `${blockchainText} Market Analytics${timeText}`,
+      description: "Trading volume, sales, and transaction metrics"
+    };
+  }
+  
+  if (query.includes('trend') || query.includes('market')) {
+    return {
+      title: `${blockchainText} Market Trends${timeText}`,
+      description: "Current market trends and activity patterns"
+    };
+  }
+  
+  // Default based on available data
+  const dataTypes = chartData?.datasets?.map(d => d.label.toLowerCase()) || [];
+  if (dataTypes.includes('volume') && dataTypes.includes('sales')) {
+    return {
+      title: `${blockchainText} Trading Overview${timeText}`,
+      description: "Volume, sales, and market activity analysis"
+    };
+  }
+  
+  // Fallback
+  return {
+    title: `${blockchainText} Market Analysis${timeText}`.trim(),
+    description: "NFT market data visualization and insights"
+  };
+};
+
 interface EnhancedChatMessageProps {
   message: ChatMessageType;
   agentType: 'copilot' | 'market-insights';
   className?: string;
   chartData?: MarketChartData;
   tableData?: TableData;
+  userQuery?: string; // Add user query to generate dynamic titles
 }
 
 export function EnhancedChatMessage({ 
@@ -32,7 +123,8 @@ export function EnhancedChatMessage({
   agentType, 
   className, 
   chartData,
-  tableData 
+  tableData,
+  userQuery 
 }: EnhancedChatMessageProps) {
   const [copied, setCopied] = useState(false);
 
@@ -110,15 +202,18 @@ export function EnhancedChatMessage({
         </div>
 
         {/* Chart Data - Full width */}
-        {chartData && (
-          <div className="mt-4 w-full">
-            <MarketAlphaChart 
-              chartData={chartData} 
-              title="Market Alpha Trends" 
-              description="Real-time NFT market data visualization"
-            />
-          </div>
-        )}
+        {chartData && chartData.block_dates && Array.isArray(chartData.block_dates) && chartData.datasets && Array.isArray(chartData.datasets) && (() => {
+          const { title, description } = generateChartTitle(userQuery || '', chartData);
+          return (
+            <div className="mt-4 w-full">
+              <MarketAlphaChart 
+                chartData={chartData} 
+                title={title} 
+                description={description}
+              />
+            </div>
+          );
+        })()}
         
         {/* Table Data - Full width */}
         {tableData && (

@@ -225,20 +225,43 @@ export async function getCollectionWhales(params: CollectionWhalesParams = {}): 
 
 /**
  * Get NFT Floor Price
- * Returns floor price data for NFT collections
+ * Returns floor price data for NFT collections across marketplaces
  * @param params Floor price parameters
  */
-export async function getNFTFloorPrice(params: { contract_address?: string; blockchain?: string } = {}): Promise<ApiResponse<any>> {
+export async function getNFTFloorPrice(params: { 
+  contract_address?: string[]; 
+  blockchain?: string; 
+  collection_name?: string[];
+  marketplace_name?: string[];
+  time_range?: string;
+  sort_by?: string;
+  sort_order?: string;
+  limit?: number;
+  offset?: number;
+} = {}): Promise<ApiResponse<any>> {
   try {
     const queryParams: Record<string, any> = {
-      blockchain: params.blockchain || 'ethereum'
+      blockchain: params.blockchain || 'ethereum',
+      time_range: params.time_range || 'all',
+      sort_by: params.sort_by || 'floor_price_usd',
+      sort_order: params.sort_order || 'desc',
+      limit: params.limit || 30,
+      offset: params.offset || 0
     };
     
-    if (params.contract_address) {
+    if (params.contract_address && params.contract_address.length > 0) {
       queryParams.contract_address = params.contract_address;
     }
     
-    const response = await fetchData('/nft/floor-price', queryParams);
+    if (params.collection_name && params.collection_name.length > 0) {
+      queryParams.collection_name = params.collection_name;
+    }
+    
+    if (params.marketplace_name && params.marketplace_name.length > 0) {
+      queryParams.marketplace_name = params.marketplace_name;
+    }
+    
+    const response = await fetchData('/nft/floor_price', queryParams);
     return response;
   } catch (error) {
     throw new Error(`Failed to fetch NFT floor price: ${error instanceof Error ? error.message : 'Unknown error'}`);

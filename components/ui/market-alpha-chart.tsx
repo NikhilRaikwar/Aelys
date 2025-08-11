@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Line, LineChart } from "recharts"
 
 import {
   Card,
@@ -19,7 +19,7 @@ import {
 import { MarketChartData } from '@/lib/types'
 
 interface MarketInsightChartProps {
-  chartData: MarketChartData
+  chartData?: MarketChartData
   title?: string
   description?: string
 }
@@ -30,9 +30,93 @@ export function MarketAlphaChart({
   description = "NFT market trends over time" 
 }: MarketInsightChartProps) {
   
-  // Transform the data for recharts
+  // Validate chartData structure
+  if (!chartData) {
+    return (
+      <Card className="mt-4">
+        <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+          <div className="grid flex-1 gap-1">
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>
+              {description}
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="aspect-auto h-[250px] w-full flex items-center justify-center">
+            <p className="text-muted-foreground">No chart data available</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!Array.isArray(chartData.block_dates)) {
+    console.error('chartData.block_dates is not an array:', chartData.block_dates);
+    return (
+      <Card className="mt-4">
+        <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+          <div className="grid flex-1 gap-1">
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>
+              {description}
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="aspect-auto h-[250px] w-full flex items-center justify-center">
+            <p className="text-muted-foreground">Invalid chart data format</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!Array.isArray(chartData.datasets) || chartData.datasets.length === 0) {
+    console.error('chartData.datasets is not an array or is empty:', chartData.datasets);
+    return (
+      <Card className="mt-4">
+        <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+          <div className="grid flex-1 gap-1">
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>
+              {description}
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="aspect-auto h-[250px] w-full flex items-center justify-center">
+            <p className="text-muted-foreground">No datasets available</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Transform the data for recharts with proper date formatting
   const transformedData = chartData.block_dates.map((date, index) => {
-    const dataPoint: any = { date };
+    // Handle different date formats and ensure proper parsing
+    let formattedDate;
+    try {
+      // Remove any quotes and parse the date
+      const cleanDate = typeof date === 'string' ? date.replace(/"/g, '') : date;
+      const parsedDate = new Date(cleanDate);
+      
+      // Check if date is valid
+      if (isNaN(parsedDate.getTime())) {
+        // If invalid, create a sequential date based on index
+        const now = new Date();
+        formattedDate = new Date(now.getTime() - (chartData.block_dates.length - index - 1) * 60 * 60 * 1000).toISOString();
+      } else {
+        formattedDate = parsedDate.toISOString();
+      }
+    } catch (error) {
+      // Fallback: create sequential dates
+      const now = new Date();
+      formattedDate = new Date(now.getTime() - (chartData.block_dates.length - index - 1) * 60 * 60 * 1000).toISOString();
+    }
+    
+    const dataPoint: any = { date: formattedDate };
     chartData.datasets.forEach(dataset => {
       dataPoint[dataset.label] = dataset.data[index] || 0;
     });
@@ -65,23 +149,7 @@ export function MarketAlphaChart({
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={transformedData}>
-            <defs>
-              {chartData.datasets.map((dataset, index) => (
-                <linearGradient key={dataset.label} id={`fill${dataset.label}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor={dataset.color || `var(--chart-${index + 1})`}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor={dataset.color || `var(--chart-${index + 1})`}
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-              ))}
-            </defs>
+          <LineChart data={transformedData}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -129,16 +197,17 @@ export function MarketAlphaChart({
               }
             />
             {chartData.datasets.map((dataset, index) => (
-              <Area
+              <Line
                 key={dataset.label}
                 dataKey={dataset.label}
                 type="monotone"
-                fill={`url(#fill${dataset.label})`}
                 stroke={dataset.color || `var(--chart-${index + 1})`}
-                stackId={chartData.datasets.length > 1 ? "a" : undefined}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 0 }}
               />
             ))}
-          </AreaChart>
+          </LineChart>
         </ChartContainer>
       </CardContent>
     </Card>

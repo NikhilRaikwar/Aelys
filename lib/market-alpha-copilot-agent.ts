@@ -72,146 +72,235 @@ async function callMarketInsightEndpoint(endpointName: string, params: any) {
   }
 }
 
+// Helper function to parse string array from API response
+function parseStringArray(str: string | string[], forceString = false): string[] | number[] {
+  if (Array.isArray(str)) return str;
+  if (typeof str !== 'string') return [];
+  
+  try {
+    // Handle PostgreSQL array format like "{value1,value2,value3}"
+    if (str.startsWith('{') && str.endsWith('}')) {
+      const cleaned = str.slice(1, -1); // Remove { and }
+      return cleaned.split(',').map(item => {
+        const trimmed = item.trim().replace(/"/g, ''); // Remove quotes
+        
+        // If forceString is true (for dates), always return as string
+        if (forceString) {
+          return trimmed;
+        }
+        
+        // Try to parse as number, if it fails return as string
+        const num = parseFloat(trimmed);
+        return !isNaN(num) ? num : trimmed;
+      });
+    }
+    
+    // Try to parse as JSON array
+    return JSON.parse(str);
+  } catch (error) {
+    console.error('Failed to parse string array:', str, error);
+    return [];
+  }
+}
+
 // Helper function to extract chart data from API response
 function extractChartData(apiData: any, endpointType: string): MarketChartData | null {
   if (!apiData?.data?.[0]?.block_dates) return null;
 
   const data = apiData.data[0];
-  const block_dates = data.block_dates;
+  const block_dates = parseStringArray(data.block_dates, true) as string[];
+  
+  // If block_dates is empty or not valid, return null
+  if (!Array.isArray(block_dates) || block_dates.length === 0) {
+    console.error('Invalid block_dates:', data.block_dates);
+    return null;
+  }
+  
   const datasets = [];
 
   switch (endpointType) {
     case 'analytics':
       if (data.volume_trend) {
-        datasets.push({
-          label: 'Volume',
-          data: data.volume_trend,
-          color: 'var(--chart-1)'
-        });
+        const volumeData = parseStringArray(data.volume_trend) as number[];
+        if (volumeData.length > 0) {
+          datasets.push({
+            label: 'Volume',
+            data: volumeData,
+            color: 'var(--chart-1)'
+          });
+        }
       }
       if (data.sales_trend) {
-        datasets.push({
-          label: 'Sales',
-          data: data.sales_trend,
-          color: 'var(--chart-2)'
-        });
+        const salesData = parseStringArray(data.sales_trend) as number[];
+        if (salesData.length > 0) {
+          datasets.push({
+            label: 'Sales',
+            data: salesData,
+            color: 'var(--chart-2)'
+          });
+        }
       }
       if (data.transactions_trend) {
-        datasets.push({
-          label: 'Transactions',
-          data: data.transactions_trend,
-          color: 'var(--chart-3)'
-        });
+        const transactionsData = parseStringArray(data.transactions_trend) as number[];
+        if (transactionsData.length > 0) {
+          datasets.push({
+            label: 'Transactions',
+            data: transactionsData,
+            color: 'var(--chart-3)'
+          });
+        }
       }
       if (data.transfers_trend) {
-        datasets.push({
-          label: 'Transfers',
-          data: data.transfers_trend,
-          color: 'var(--chart-4)'
-        });
+        const transfersData = parseStringArray(data.transfers_trend) as number[];
+        if (transfersData.length > 0) {
+          datasets.push({
+            label: 'Transfers',
+            data: transfersData,
+            color: 'var(--chart-4)'
+          });
+        }
       }
       break;
     
     case 'holders':
       if (data.volume_trend) {
-        datasets.push({
-          label: 'Volume',
-          data: data.volume_trend,
-          color: 'var(--chart-1)'
-        });
+        const volumeData = parseStringArray(data.volume_trend) as number[];
+        if (volumeData.length > 0) {
+          datasets.push({
+            label: 'Volume',
+            data: volumeData,
+            color: 'var(--chart-1)'
+          });
+        }
       }
       if (data.sales_trend) {
-        datasets.push({
-          label: 'Sales',
-          data: data.sales_trend,
-          color: 'var(--chart-2)'
-        });
+        const salesData = parseStringArray(data.sales_trend) as number[];
+        if (salesData.length > 0) {
+          datasets.push({
+            label: 'Sales',
+            data: salesData,
+            color: 'var(--chart-2)'
+          });
+        }
       }
       if (data.transactions_trend) {
-        datasets.push({
-          label: 'Transactions',
-          data: data.transactions_trend,
-          color: 'var(--chart-3)'
-        });
+        const transactionsData = parseStringArray(data.transactions_trend) as number[];
+        if (transactionsData.length > 0) {
+          datasets.push({
+            label: 'Transactions',
+            data: transactionsData,
+            color: 'var(--chart-3)'
+          });
+        }
       }
       break;
     
     case 'traders':
       if (data.traders_trend) {
-        datasets.push({
-          label: 'Total Traders',
-          data: data.traders_trend,
-          color: 'var(--chart-1)'
-        });
+        const tradersData = parseStringArray(data.traders_trend) as number[];
+        if (tradersData.length > 0) {
+          datasets.push({
+            label: 'Total Traders',
+            data: tradersData,
+            color: 'var(--chart-1)'
+          });
+        }
       }
       if (data.traders_buyers_trend) {
-        datasets.push({
-          label: 'Buyers',
-          data: data.traders_buyers_trend,
-          color: 'var(--chart-2)'
-        });
+        const buyersData = parseStringArray(data.traders_buyers_trend) as number[];
+        if (buyersData.length > 0) {
+          datasets.push({
+            label: 'Buyers',
+            data: buyersData,
+            color: 'var(--chart-2)'
+          });
+        }
       }
       if (data.traders_sellers_trend) {
-        datasets.push({
-          label: 'Sellers',
-          data: data.traders_sellers_trend,
-          color: 'var(--chart-3)'
-        });
+        const sellersData = parseStringArray(data.traders_sellers_trend) as number[];
+        if (sellersData.length > 0) {
+          datasets.push({
+            label: 'Sellers',
+            data: sellersData,
+            color: 'var(--chart-3)'
+          });
+        }
       }
       break;
 
     case 'scores':
       if (data.market_cap_trend) {
-        datasets.push({
-          label: 'Market Cap',
-          data: data.market_cap_trend,
-          color: 'var(--chart-1)'
-        });
+        const marketCapData = parseStringArray(data.market_cap_trend) as number[];
+        if (marketCapData.length > 0) {
+          datasets.push({
+            label: 'Market Cap',
+            data: marketCapData,
+            color: 'var(--chart-1)'
+          });
+        }
       }
       if (data.marketstate_trend) {
-        datasets.push({
-          label: 'Market State',
-          data: data.marketstate_trend,
-          color: 'var(--chart-2)'
-        });
+        const marketStateData = parseStringArray(data.marketstate_trend) as number[];
+        if (marketStateData.length > 0) {
+          datasets.push({
+            label: 'Market State',
+            data: marketStateData,
+            color: 'var(--chart-2)'
+          });
+        }
       }
       break;
 
     case 'washtrade':
       if (data.washtrade_volume_trend) {
-        datasets.push({
-          label: 'Washtrade Volume',
-          data: data.washtrade_volume_trend,
-          color: 'var(--chart-1)'
-        });
+        const washVolumeData = parseStringArray(data.washtrade_volume_trend) as number[];
+        if (washVolumeData.length > 0) {
+          datasets.push({
+            label: 'Washtrade Volume',
+            data: washVolumeData,
+            color: 'var(--chart-1)'
+          });
+        }
       }
       if (data.washtrade_suspect_sales_trend) {
-        datasets.push({
-          label: 'Suspect Sales',
-          data: data.washtrade_suspect_sales_trend,
-          color: 'var(--chart-2)'
-        });
+        const suspectSalesData = parseStringArray(data.washtrade_suspect_sales_trend) as number[];
+        if (suspectSalesData.length > 0) {
+          datasets.push({
+            label: 'Suspect Sales',
+            data: suspectSalesData,
+            color: 'var(--chart-2)'
+          });
+        }
       }
       if (data.washtrade_assets_trend) {
-        datasets.push({
-          label: 'Washtrade Assets',
-          data: data.washtrade_assets_trend,
-          color: 'var(--chart-3)'
-        });
+        const assetsData = parseStringArray(data.washtrade_assets_trend) as number[];
+        if (assetsData.length > 0) {
+          datasets.push({
+            label: 'Washtrade Assets',
+            data: assetsData,
+            color: 'var(--chart-3)'
+          });
+        }
       }
       if (data.washtrade_suspect_transactions_trend) {
-        datasets.push({
-          label: 'Suspect Transactions',
-          data: data.washtrade_suspect_transactions_trend,
-          color: 'var(--chart-4)'
-        });
+        const suspectTxData = parseStringArray(data.washtrade_suspect_transactions_trend) as number[];
+        if (suspectTxData.length > 0) {
+          datasets.push({
+            label: 'Suspect Transactions',
+            data: suspectTxData,
+            color: 'var(--chart-4)'
+          });
+        }
       }
       if (data.washtrade_wallets_trend) {
-        datasets.push({
-          label: 'Washtrade Wallets',
-          data: data.washtrade_wallets_trend,
-          color: 'var(--chart-5)'
-        });
+        const walletsData = parseStringArray(data.washtrade_wallets_trend) as number[];
+        if (walletsData.length > 0) {
+          datasets.push({
+            label: 'Washtrade Wallets',
+            data: walletsData,
+            color: 'var(--chart-5)'
+          });
+        }
       }
       break;
   }
@@ -253,6 +342,12 @@ Available Market Insight API functions:
    - Returns: Whale activity metrics for NFT collections including whale count, whale activities, and activity trends
    - Sort options: nft_count, mint_count, mint_volume, mint_whales, unique_wallets, unique_mint_wallets, unique_buy_wallets, unique_sell_wallets, total_mint_volume, total_sale_volume, buy_count, buy_volume, buy_whales, sell_count, sell_volume, sell_whales, whale_holders
 
+7. floor_price: NFT collection floor prices - PROVIDES TABLE DATA
+   - Parameters: { blockchain?: string, collection_name?: string[], contract_address?: string[], marketplace_name?: string[] }
+   - Default: blockchain="ethereum", time_range="all"
+   - Returns: Floor price data for NFT collections across different marketplaces
+   - Use this for queries about "floor price", "cheapest", "lowest price" of NFT collections
+
 Supported blockchains: atleta_olympia, avalanche, base, berachain, binance, bitcoin, ethereum, full, linea, monad_testnet, polygon, polyhedra_testnet, root, solana, somnia_testnet, soneium, unichain, unichain_sepolia
 Supported time ranges: 15m, 30m, 24h, 7d, 30d, 90d, all
 
@@ -266,18 +361,24 @@ CRITICAL RESPONSE RULES:
 7. For washtrade queries, use the 'washtrade' endpoint
 8. For holder queries, use the 'holders' endpoint
 9. For whale/collection whale queries, use the 'collection_whales' endpoint
+10. For floor price queries, use the 'floor_price' endpoint
 
 When you need to make API calls, you MUST respond with this EXACT JSON format (NO markdown, NO explanatory text):
 {
   "action": "api_calls",
   "calls": [
     {
-      "function": "scores",
-      "params": { "blockchain": "ethereum", "time_range": "24h" }
+      "function": "floor_price",
+      "params": { "blockchain": "ethereum", "collection_name": ["Pudgy Penguins"] }
     }
   ],
   "explanation": "Brief explanation of what data you're fetching"
 }
+
+FOR FLOOR PRICE QUERIES:
+- ALWAYS use the 'floor_price' endpoint for queries about floor price, cheapest price, lowest price
+- Include collection_name parameter with the NFT collection name mentioned in the query
+- Example: "What's the floor price of Pudgy Penguins?" should call floor_price with collection_name: ["Pudgy Penguins"]
 
 ABSOLUTE REQUIREMENTS:
 - Return ONLY the JSON object above - nothing else
@@ -359,7 +460,18 @@ export async function askMarketAlphaCopilotAgent(
     });
 
     // If GPT wants to make API calls, execute them
-    if (apiCallInstructions?.action === 'api_calls' && apiCallInstructions.calls && apiCallInstructions.calls.length > 0) {
+    if (apiCallInstructions?.action === 'api_calls' && apiCallInstructions.calls) {
+      // Handle case where calls array is empty (GPT determined no API call needed)
+      if (apiCallInstructions.calls.length === 0) {
+        console.log('GPT determined no API calls needed, providing explanation:', apiCallInstructions.explanation);
+        return {
+          answer: apiCallInstructions.explanation || 'No specific market data is available for this query through our endpoints.',
+          metadata: {
+            tokensUsed: openaiResponse.usage?.total_tokens || 0,
+            executionTime: Date.now() - startTime
+          }
+        };
+      }
       console.log('Executing API calls:', apiCallInstructions.calls);
       const results = [];
       let chartData: MarketChartData | null = null;
